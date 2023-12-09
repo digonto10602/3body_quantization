@@ -1,0 +1,3 @@
+git add * #adds all the codes for commiting to the repository
+git commit -m "message" #commits with the message 
+git push -u origin master #uploads the code to github
