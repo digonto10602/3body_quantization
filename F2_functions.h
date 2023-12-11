@@ -3,7 +3,7 @@
 
 #include<bits/stdc++.h>
 #include<cmath>
-#include "gsl/gsl_sf_dawson.h"
+//#include "gsl/gsl_sf_dawson.h"
 //#include<Eigen/Dense>
 
 /* First we code all the function needed for F2 functions, we start with a single F in S-wave
@@ -149,6 +149,7 @@ comp I00_sum_F(     comp En,
                     double mk, 
                     double L    )
 {
+    double tolerance = 1.0e-11;
     double pi = std::acos(-1.0);
 
     comp gamma = (En - omega_func(p,mi))/std::sqrt(sigma_p);
@@ -160,15 +161,15 @@ comp I00_sum_F(     comp En,
 
     comp xibygamma = xi/gamma; 
     
-    int na_x_initial = -10;
-    int na_x_final = +10;
-    int na_y_initial = -10;
-    int na_y_final = +10;
-    int na_z_initial = -10;
-    int na_z_final = +10;
+    int na_x_initial = -100;
+    int na_x_final = +100;
+    int na_y_initial = -100;
+    int na_y_final = +100;
+    int na_z_initial = -100;
+    int na_z_final = +100;
 
     comp summ = {0.0,0.0};
-
+    comp temp_summ = {0.0,0.0};
     for(int i=na_x_initial;i<na_x_final+1;++i)
     {
         for(int j=na_y_initial;j<na_y_final+1;++j)
@@ -201,7 +202,12 @@ comp I00_sum_F(     comp En,
                 //         <<"r = "<<r<<'\t'<<"rx = "<<rx<<'\t'<<"ry = "<<ry<<'\t'<<"rz = "<<rz<<std::endl;
 
                 summ = summ + std::exp(alpha*(x*x - r*r))/(x*x - r*r);
-
+                if(abs(summ - temp_summ)<tolerance)
+                {
+                    std::cout<<"sum broken at: i="<<i<<'\t'<<"j="<<j<<'\t'<<"k="<<k<<std::endl;
+                    break;
+                }
+                temp_summ = summ;
             }
         }
     }
@@ -212,7 +218,7 @@ comp I00_sum_F(     comp En,
 
 
 comp F2_i1( comp En, 
-            std::vector<comp> k, //we assume that k is a 3-vector
+            std::vector<comp> k, //we assume that k,p is a 3-vector
             std::vector<comp> p,
             comp total_P,
             double L, 
@@ -262,7 +268,7 @@ comp F2_i1( comp En,
         comp C = I0F(En, sigp, spec_p, total_P, alpha, mi, mj, mk, L);
         std::cout<<A<<'\t'<<B<<'\t'<<C<<std::endl; 
 
-        return A*(B - C);
+        return A*(B/(4.0*pi) - C/(4.0*pi));
     }
 
 }
