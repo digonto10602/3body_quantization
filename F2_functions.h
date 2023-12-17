@@ -43,6 +43,13 @@ comp q2psq_star(    comp sigma_i,
     return kallentriangle(sigma_i, mj*mj, mk*mk)/(4.0*sigma_i);
 }
 
+comp pmom(  comp En,
+            comp sigk,
+            double m    )
+{
+    return sqrt(kallentriangle(En,sigk,m*m))/(2.0*sqrt(En*En));
+}
+
 comp Jfunc( comp z  )
 {
     if(std::real(z)<=0.0)
@@ -153,20 +160,27 @@ comp I00_sum_F(     comp En,
     double pi = std::acos(-1.0);
 
     comp gamma = (En - omega_func(p,mi))/std::sqrt(sigma_p);
-    std::cout<<"gamma = "<<gamma<<std::endl;
+    //std::cout<<"gamma = "<<gamma<<std::endl;
     comp x = std::sqrt(q2psq_star(sigma_p,mj,mk))*L/(2.0*pi);
     comp xi = 0.5*(1.0 + (mj*mj - mk*mk)/sigma_p);
 
     comp npP = (p - total_P)*L/(2.0*pi); //this is directed in the z-direction
 
+    int c1 = 0;
+    int c2 = 0; //these two are for checking if p and P are zero or not
+
+    if(abs(p)<1.0e-10) c1 = 1;
+    if(abs(total_P)<1.0e-10) c2 = 1;
+
     comp xibygamma = xi/gamma; 
     
-    int na_x_initial = -100;
-    int na_x_final = +100;
-    int na_y_initial = -100;
-    int na_y_final = +100;
-    int na_z_initial = -100;
-    int na_z_final = +100;
+    int max_shell_num = 20;
+    int na_x_initial = -max_shell_num;
+    int na_x_final = +max_shell_num;
+    int na_y_initial = -max_shell_num;
+    int na_y_final = +max_shell_num;
+    int na_z_initial = -max_shell_num;
+    int na_z_final = +max_shell_num;
 
     comp summ = {0.0,0.0};
     comp temp_summ = {0.0,0.0};
@@ -193,7 +207,16 @@ comp I00_sum_F(     comp En,
                 
                 comp rx = nax;
                 comp ry = nay;
-                comp rz = naz + npP*prod1; 
+                comp rz = 0.0;
+                
+                if(c1==1 and c2==1)
+                {
+                    rz = naz;// + npP*prod1; 
+                }
+                else 
+                {
+                    rz = naz + npP*prod1;
+                }
 
                 comp r = std::sqrt(rx*rx + ry*ry + rz*rz);
 
@@ -202,12 +225,12 @@ comp I00_sum_F(     comp En,
                 //         <<"r = "<<r<<'\t'<<"rx = "<<rx<<'\t'<<"ry = "<<ry<<'\t'<<"rz = "<<rz<<std::endl;
 
                 summ = summ + std::exp(alpha*(x*x - r*r))/(x*x - r*r);
-                if(abs(summ - temp_summ)<tolerance)
-                {
-                    std::cout<<"sum broken at: i="<<i<<'\t'<<"j="<<j<<'\t'<<"k="<<k<<std::endl;
-                    break;
-                }
-                temp_summ = summ;
+                //if(abs(summ - temp_summ)<tolerance)
+                //{
+                    //std::cout<<"sum broken at: i="<<i<<'\t'<<"j="<<j<<'\t'<<"k="<<k<<std::endl;
+                    //break;
+                //}
+                //temp_summ = summ;
             }
         }
     }
