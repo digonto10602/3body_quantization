@@ -169,12 +169,12 @@ comp I00_sum_F(     comp En,
     int c1 = 0;
     int c2 = 0; //these two are for checking if p and P are zero or not
 
-    if(abs(p)<1.0e-10) c1 = 1;
-    if(abs(total_P)<1.0e-10) c2 = 1;
+    if(abs(p)<1.0e-10 || abs(p)==0.0 ) c1 = 1;
+    if(abs(total_P)<1.0e-10 || abs(total_P)==0.0) c2 = 1;
 
     comp xibygamma = xi/gamma; 
     
-    int max_shell_num = 20;
+    int max_shell_num = 50;
     int na_x_initial = -max_shell_num;
     int na_x_final = +max_shell_num;
     int na_y_initial = -max_shell_num;
@@ -209,7 +209,7 @@ comp I00_sum_F(     comp En,
                 comp ry = nay;
                 comp rz = 0.0;
                 
-                if(c1==1 and c2==1)
+                if(c1==1 && c2==1)
                 {
                     rz = naz;// + npP*prod1; 
                 }
@@ -280,18 +280,18 @@ comp F2_i1( comp En,
         condition_delta = 1;
     }
     
-    //if(condition_delta==1) return 0.0;
-    //else 
+    if(condition_delta==1) return 0.0;
+    else 
     {
         double pi = std::acos(-1.0);
-        comp A = cutoff/(64.0*pi*pi*pi*L*L*L*L*omega_p*(En - omega_p));
+        comp A = cutoff/(16.0*pi*pi*L*L*L*L*omega_p*(En - omega_p));
 
         comp B = I00_sum_F(En,sigp, spec_p, total_P, alpha, mi, mj, mk, L);
 
         comp C = I0F(En, sigp, spec_p, total_P, alpha, mi, mj, mk, L);
-        std::cout<<A<<'\t'<<B<<'\t'<<C<<std::endl; 
+        //std::cout<<A<<'\t'<<B<<'\t'<<C<<std::endl; 
 
-        return A*(B/(4.0*pi) - C/(4.0*pi));
+        return A*(B - C);
     }
 
 }
