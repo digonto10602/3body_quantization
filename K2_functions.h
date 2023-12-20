@@ -2,6 +2,7 @@
 #define K2FUNCTIONS_H
 
 #include "F2_functions.h"
+#include<Eigen/Dense>
 
 /* We code the K2 functions here, K2inv denotes the first definition that goes in to the
 tilde_K2 function defined in 2.15 and 2.14 equations of the paper https://arxiv.org/pdf/2111.12734.pdf
@@ -27,8 +28,8 @@ comp K2_inv_00( double eta_i, //this is the symmetry factor, eta=1 for piK (i=1)
 
 comp tilde_K2_00(   double eta_i, 
                     double scattering_length,
-                    comp p,
-                    comp k,
+                    std::vector<comp> p,
+                    std::vector<comp> k,
                     comp sigma_i,
                     double mi,
                     double mj,
@@ -36,15 +37,27 @@ comp tilde_K2_00(   double eta_i,
                     double epsilon_h, 
                     double L    )
 {
-    double tolerance = 1.0e-15;
-    double p1 = real(p);
-    double p2 = imag(p);
-    double k1 = real(k);
-    double k2 = imag(k);
+    double tolerance = 1.0e-10;
+    comp px = p[0];
+    comp py = p[1];
+    comp pz = p[2];
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+    
+    comp kx = k[0];
+    comp ky = k[1];
+    comp kz = k[2];
+
+    comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz);
+
+    double p1 = real(spec_p);
+    double p2 = imag(spec_p);
+    double k1 = real(spec_k);
+    double k2 = imag(spec_k);
 
     if(abs(p1-k1)<tolerance && abs(p2-k2)<tolerance)
     {
-        comp omega1 = omega_func(k,mi);
+        comp omega1 = omega_func(spec_k,mi);
         comp K2 = 1.0/K2_inv_00(eta_i, scattering_length, sigma_i, mj, mk, epsilon_h);
         return 2.0*omega1*L*L*L*K2;
     }

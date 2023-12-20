@@ -3,6 +3,7 @@
 
 #include<bits/stdc++.h>
 #include<cmath>
+#include<Eigen/Dense>
 //#include "gsl/gsl_sf_dawson.h"
 //#include<Eigen/Dense>
 
@@ -47,7 +48,7 @@ comp pmom(  comp En,
             comp sigk,
             double m    )
 {
-    return sqrt(kallentriangle(En,sigk,m*m))/(2.0*sqrt(En*En));
+    return sqrt(kallentriangle(En*En,sigk,m*m))/(2.0*sqrt(En*En));
 }
 
 comp Jfunc( comp z  )
@@ -148,33 +149,50 @@ comp I0F(   comp En,
 
 comp I00_sum_F(     comp En, 
                     comp sigma_p,
-                    comp p,
-                    comp total_P, 
+                    std::vector<comp> p,
+                    std::vector<comp> total_P, 
                     double alpha,
                     double mi,
                     double mj,
                     double mk, 
-                    double L    )
+                    double L,
+                    int max_shell_num    )
 {
     double tolerance = 1.0e-11;
     double pi = std::acos(-1.0);
 
-    comp gamma = (En - omega_func(p,mi))/std::sqrt(sigma_p);
+    comp px = p[0];
+    comp py = p[1];
+    comp pz = p[2];
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+
+    comp Px = total_P[0];
+    comp Py = total_P[1];
+    comp Pz = total_P[2];
+
+    comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+    comp gamma = (En - omega_func(spec_p,mi))/std::sqrt(sigma_p);
     //std::cout<<"gamma = "<<gamma<<std::endl;
     comp x = std::sqrt(q2psq_star(sigma_p,mj,mk))*L/(2.0*pi);
     comp xi = 0.5*(1.0 + (mj*mj - mk*mk)/sigma_p);
 
-    comp npP = (p - total_P)*L/(2.0*pi); //this is directed in the z-direction
+    comp npPx = (px - Px)*L/(2.0*pi); //this is directed in the z-direction
+    comp npPy = (py - Py)*L/(2.0*pi);
+    comp npPz = (pz - Pz)*L/(2.0*pi);
+
+    comp npP = std::sqrt(npPx*npPx + npPy*npPy + npPz*npPz);
 
     int c1 = 0;
     int c2 = 0; //these two are for checking if p and P are zero or not
 
-    if(abs(p)<1.0e-10 || abs(p)==0.0 ) c1 = 1;
-    if(abs(total_P)<1.0e-10 || abs(total_P)==0.0) c2 = 1;
+    if(abs(spec_p)<1.0e-10 || abs(spec_p)==0.0 ) c1 = 1;
+    if(abs(total_P_val)<1.0e-10 || abs(total_P_val)==0.0) c2 = 1;
 
     comp xibygamma = xi/gamma; 
     
-    int max_shell_num = 50;
+    //int max_shell_num = 50;
     int na_x_initial = -max_shell_num;
     int na_x_final = +max_shell_num;
     int na_y_initial = -max_shell_num;
@@ -196,26 +214,30 @@ comp I00_sum_F(     comp En,
                 comp nay = (comp) j;
                 comp naz = (comp) k;
 
-                comp nax_npPx = nax*0.0;
-                comp nay_npPy = naz*0.0;
-                comp naz_npPz = naz*npP; 
+                comp nax_npPx = nax*npPx;
+                comp nay_npPy = naz*npPy;
+                comp naz_npPz = naz*npPz; 
 
                 comp na_dot_npP = nax_npPx + nay_npPy + naz_npPz;
                 comp npPsq = npP*npP; 
 
                 comp prod1 = ( (na_dot_npP/npPsq)*(1.0/gamma - 1.0) + xibygamma );
                 
-                comp rx = nax;
-                comp ry = nay;
+                comp rx = 0.0;
+                comp ry = 0.0;
                 comp rz = 0.0;
                 
                 if(c1==1 && c2==1)
                 {
-                    rz = naz;// + npP*prod1; 
+                    rx = nax;
+                    ry = nay;
+                    rz = naz; 
                 }
                 else 
                 {
-                    rz = naz + npP*prod1;
+                    rx = nax + npPx*prod1;
+                    ry = nay + npPy*prod1;
+                    rz = naz + npPz*prod1;
                 }
 
                 comp r = std::sqrt(rx*rx + ry*ry + rz*rz);
@@ -241,15 +263,16 @@ comp I00_sum_F(     comp En,
 
 
 comp F2_i1( comp En, 
-            std::vector<comp> k, //we assume that k,p is a 3-vector
+            std::vector<comp> k, //we assume that k,p,P are a 3-vector
             std::vector<comp> p,
-            comp total_P,
+            std::vector<comp> total_P,
             double L, 
             double mi,
             double mj, 
             double mk, 
             double alpha,
-            double epsilon_h    )
+            double epsilon_h,
+            int max_shell_num    )
 {
     comp kx = k[0];
     comp ky = k[1];
@@ -259,10 +282,15 @@ comp F2_i1( comp En,
     comp py = p[1];
     comp pz = p[2];
 
+    comp Px = total_P[0];
+    comp Py = total_P[1];
+    comp Pz = total_P[2];
+
     comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz);
     comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+    comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
 
-    comp sigp = sigma(En, spec_p, mi, total_P);
+    comp sigp = sigma(En, spec_p, mi, total_P_val);
 
     comp cutoff = cutoff_function_1(sigp, mj, mk, epsilon_h);
 
@@ -286,9 +314,9 @@ comp F2_i1( comp En,
         double pi = std::acos(-1.0);
         comp A = cutoff/(16.0*pi*pi*L*L*L*L*omega_p*(En - omega_p));
 
-        comp B = I00_sum_F(En,sigp, spec_p, total_P, alpha, mi, mj, mk, L);
+        comp B = I00_sum_F(En,sigp, p, total_P, alpha, mi, mj, mk, L, max_shell_num);
 
-        comp C = I0F(En, sigp, spec_p, total_P, alpha, mi, mj, mk, L);
+        comp C = I0F(En, sigp, spec_p, total_P_val, alpha, mi, mj, mk, L);
         //std::cout<<A<<'\t'<<B<<'\t'<<C<<std::endl; 
 
         return A*(B - C);
@@ -296,7 +324,115 @@ comp F2_i1( comp En,
 
 }
 
+/* Configuration vectors for the spectator momentum, these are 
+generated with only the integer numbers first, then multiplied with
+2pi/L, and they go upto where H(k) becomes zero */
 
+void config_maker(  std::vector< std::vector<comp> > &p_config,
+                    comp En,
+                    double mi,
+                    double L    )
+{
+    double pi = std::acos(-1.0);
+
+    comp kmax = pmom(En,0.0,mi);
+
+    int nmax = (int)ceil((L/(2.0*pi))*abs(kmax));
+
+    int nmaxsq = nmax*nmax; 
+
+    for(int i=-nmax; i<nmax + 1; ++i)
+    {
+        for(int j=-nmax; j<nmax + 1; ++j)
+        {
+            for(int k=-nmax; k<nmax + 1; ++k)
+            {
+                int nsq = i*i + j*j + k*k; 
+                if(nsq<=nmaxsq)
+                {
+                    comp px = (2.0*pi/L)*i;
+                    comp py = (2.0*pi/L)*j;
+                    comp pz = (2.0*pi/L)*k; 
+
+                    comp p = std::sqrt(px*px + py*py + pz*pz);
+                    
+                    if(abs(p)<=abs(kmax))
+                    {
+                        p_config[0].push_back(px);
+                        p_config[1].push_back(py);
+                        p_config[2].push_back(pz); 
+                    }
+                    else 
+                    {
+                        continue; 
+                    }
+                    std::cout << "n = " << i << j << k << " nsq = " << nsq << std::endl; 
+                    std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
+                    std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                }
+            }
+        }
+    }
+    //std::cout << "nmax = " << nmax << '\t' << "nval = " << (L/(2.0*pi))*abs(kmax) << '\t' 
+    //          << "kmax = " << kmax << std::endl;
+}
+
+
+/* This is the F2 matrix for a single block, this matrix could be
+used to test QC3 for identical particles. Later on, we will use two 
+of this matrices to build the F_hat matrix needed for the KKpi project */
+
+void F2_i_mat(  Eigen::MatrixXcd &F2,
+                comp En, 
+                std::vector<std::vector<comp> > &p_config,
+                std::vector<std::vector<comp> > &k_config,
+                std::vector<comp> total_P,
+                double mi,
+                double mj, 
+                double mk, 
+                double L, 
+                double alpha, 
+                double epsilon_h,
+                int max_shell_num  )
+{
+    for(int i=0; i<p_config[0].size(); ++i)
+    {
+        for(int j=0; j<k_config[0].size(); ++j)
+        {
+            comp px = p_config[0][i];
+            comp py = p_config[1][i];
+            comp pz = p_config[2][i];
+
+            comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+            std::vector<comp> p(3);
+            p[0] = px;
+            p[1] = py;
+            p[2] = pz; 
+
+            comp kx = k_config[0][j];
+            comp ky = k_config[1][j];
+            comp kz = k_config[2][j];
+
+            comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz);
+            std::vector<comp> k(3);
+            k[0] = kx;
+            k[1] = ky;
+            k[2] = kz; 
+
+            comp Px = total_P[0];
+            comp Py = total_P[1];
+            comp Pz = total_P[2];
+
+            comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+            
+            comp F2_val = F2_i1(En, k, p, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+
+            F2(i,j) = F2_val;
+
+
+        }
+    }
+}
             
 
 
