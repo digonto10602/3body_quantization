@@ -187,6 +187,43 @@ void test_K2_i_mat()
     std::cout << K2inv_mat << std::endl; 
 }
 
+void test_G_ij_mat()
+{
+    double En = 3.1;
+    double L = 6;
+    double mi = 1.0;
+    double mj = 1.0;
+    double mk = 1.0;
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 50;
+    double eta_i = 0.5;
+    double scattering_length = -10.0;
+
+    std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+
+    config_maker(p_config, En, mi, L);
+
+    std::vector< std::vector<comp> > k_config = p_config; 
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    int size = p_config[0].size(); 
+    Eigen::MatrixXcd G_mat(size,size);
+
+    G_ij_mat(G_mat, En, p_config, k_config, total_P, mi, mj, mk, L, epsilon_h); 
+                    
+
+    std::cout << G_mat << std::endl; 
+}
+
 
 int main()
 {
@@ -197,6 +234,7 @@ int main()
     //I00_sum_F_test();
     //test_config_maker();
     //test_F2_i_mat();
-    test_K2_i_mat();
+    //test_K2_i_mat();
+    test_G_ij_mat();
     return 0;
 }

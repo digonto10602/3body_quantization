@@ -60,6 +60,56 @@ comp G_ij(  comp En,
     return oneby2omegapLcube*cutoff1*cutoff2*onebydenom*oneby2omegakLcube;
 
 }
+
+void G_ij_mat(  Eigen::MatrixXcd &Gmat,
+                comp En, 
+                std::vector< std::vector<comp> > &p_config, 
+                std::vector< std::vector<comp> > &k_config, 
+                std::vector<comp> total_P, 
+                double mi, 
+                double mj, 
+                double mk, 
+                double L, 
+                double epsilon_h    )
+{
+    int size = p_config[0].size(); 
+
+    for(int i=0; i<size; ++i)
+    {
+        for(int j=0; j<size; ++j)
+        {
+            comp px = p_config[0][i];
+            comp py = p_config[1][i];
+            comp pz = p_config[2][i];
+
+            comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+
+            std::vector<comp> p(3);
+            p[0] = px; 
+            p[1] = py; 
+            p[2] = pz; 
+
+            comp kx = k_config[0][j];
+            comp ky = k_config[1][j];
+            comp kz = k_config[2][j]; 
+
+            comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz);
+
+            std::vector<comp> k(3);
+            k[0] = kx; 
+            k[1] = ky; 
+            k[2] = kz; 
+
+            comp Px = total_P[0];
+            comp Py = total_P[1];
+            comp Pz = total_P[2];
+
+            comp Gij_val = G_ij(En, p, k, total_P, mi, mj, mk, L, epsilon_h);
+
+            Gmat(i,j) = Gij_val; 
+        }
+    }
+}
  
 
 
