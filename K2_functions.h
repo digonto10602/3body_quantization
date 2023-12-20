@@ -68,4 +68,65 @@ comp tilde_K2_00(   double eta_i,
 }
 
 
+/*  This is K2 matrix we use to build K2_hat matrix for the KKpi 
+project, this function builds a matrix for 1/(2 omega_p L^3 )*K2_inv_00
+This function assumes that pvec and kvec are same, if they are different 
+then this function will not work for them and have to be redefined */
+
+void K2inv_i_mat(   Eigen::MatrixXcd &K2inv,
+                    double eta_i, 
+                    double scattering_length,
+                    comp En,  
+                    std::vector< std::vector<comp> > &p_config, 
+                    std::vector< std::vector<comp> > &k_config,
+                    std::vector<comp> total_P,
+                    double mi, 
+                    double mj, 
+                    double mk, 
+                    double epsilon_h, 
+                    double L            )
+{
+    int size = p_config[0].size();
+    for(int i=0; i<size; ++i)
+    {
+        for(int j=0; j<size; ++j)
+        {
+            if(i==j)
+            {
+                comp px = p_config[0][i];
+                comp py = p_config[1][i];
+                comp pz = p_config[2][i];
+
+                comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+
+                comp kx = k_config[0][j];
+                comp ky = k_config[1][j];
+                comp kz = k_config[2][j];
+
+                comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz);
+
+                comp Px = total_P[0];
+                comp Py = total_P[1];
+                comp Pz = total_P[2];
+
+                comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+                comp sig_k = sigma(En, spec_k, mi, total_P_val);
+
+                comp K2_inv_val = K2_inv_00(eta_i, scattering_length, sig_k, mj, mk, epsilon_h);
+
+                comp omega_k = omega_func(spec_k, mi);
+
+                comp constval = 1.0/(2.0*omega_k*L*L*L);
+                
+                K2inv(i,j) = constval*K2_inv_val; 
+            }
+            else 
+            {
+                K2inv(i,j) = 0.0;
+            }
+        }
+    }
+}
+
 #endif
