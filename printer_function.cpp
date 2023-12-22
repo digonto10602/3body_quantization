@@ -224,6 +224,118 @@ void test_G_ij_mat()
     std::cout << G_mat << std::endl; 
 }
 
+void test_F3_mat()
+{
+    double En = 2.5;
+    double L = 6;
+    double mi = 1.0;
+    double mj = 1.0;
+    double mk = 1.0;
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 50;
+    double eta_i = 0.5;
+    double scattering_length = -10.0;
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+
+    //config_maker(p_config, En, mi, L);
+    double config_tolerance = 1.0e-5;
+    config_maker_1(p_config, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+
+    std::vector< std::vector<comp> > k_config = p_config; 
+
+    
+
+    for(int i=0;i<p_config[0].size();++i)
+    {
+        comp px = p_config[0][i];
+        comp py = p_config[1][i];
+        comp pz = p_config[2][i];
+        comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+
+        std::cout << "p = " << spec_p << std::endl; 
+    }
+
+    int size = p_config[0].size(); 
+    Eigen::MatrixXcd F3_mat(size,size);
+
+    F3_ID_mat(F3_mat, En, p_config, k_config, total_P, eta_i, scattering_length, mi, mj, mk, alpha, epsilon_h, L, max_shell_num );
+
+    std::cout << "F3 mat = " << std::endl;                
+    std::cout << F3_mat << std::endl; 
+    std::cout << F3_mat.sum() << std::endl;
+}
+
+void test_F3_mat_vs_En()
+{
+    //double En = 3.1;
+    double L = 6;
+    double mi = 1.0;
+    double mj = 1.0;
+    double mk = 1.0;
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    double eta_i = 0.5;
+    double scattering_length = -10.0;
+    
+    double En_initial = 2.5;
+    double En_final = 4.5;
+    double En_points = 1000.0;
+    double del_En = abs(En_initial - En_final)/En_points; 
+
+    std::ofstream fout; 
+    std::string filename = "F3_ID_test_1.dat";
+    fout.open(filename.c_str());
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    for(int i=0; i<En_points+1; ++i)
+    {
+        double En = En_initial + i*del_En; 
+        std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+
+        //config_maker(p_config, En, mi, L);
+        double config_tolerance = 1.0e-5;
+        config_maker_1(p_config, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+
+        std::vector< std::vector<comp> > k_config = p_config; 
+
+        
+
+        int size = p_config[0].size(); 
+        Eigen::MatrixXcd F3_mat(size,size);
+
+        F3_ID_mat(F3_mat, En, p_config, k_config, total_P, eta_i, scattering_length, mi, mj, mk, alpha, epsilon_h, L, max_shell_num );
+
+        //std::cout << F3_mat << std::endl;            
+        comp res = F3_mat.sum();
+        //std::cout << F3_mat << std::endl; 
+        std::cout << "En = " << En << " F3 = " << res << std::endl;
+        fout << En << '\t' << real(res) << '\t' << imag(res) << std::endl; 
+    }
+
+    fout.close();
+    
+}
+
 
 int main()
 {
@@ -235,6 +347,9 @@ int main()
     //test_config_maker();
     //test_F2_i_mat();
     //test_K2_i_mat();
-    test_G_ij_mat();
+    //test_G_ij_mat();
+    test_F3_mat();
+    //test_F3_mat_vs_En();
+    
     return 0;
 }

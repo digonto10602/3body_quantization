@@ -6,9 +6,30 @@
 
 typedef std::complex<double> comp;
 
-//first the QC3 for identical particles
+//Basic Solvers that we will need in this program
+void LinearSolver_3(	Eigen::MatrixXcd &A,
+					Eigen::MatrixXcd &X,
+					Eigen::MatrixXcd &B,
+					double &relerr 			)
+{
+	X = A.partialPivLu().solve(B);
 
-comp QC3_ID(   comp En,
+	relerr = (A*X - B).norm()/B.norm();
+}
+
+void LinearSolver_4(	Eigen::MatrixXcd &A,
+					Eigen::MatrixXcd &X,
+					Eigen::MatrixXcd &B,
+					double &relerr 			)
+{
+	X = A.colPivHouseholderQr().solve(B);
+
+	relerr = (A*X - B).norm()/B.norm();
+}
+
+//first the F3 for identical particles
+
+comp F3_ID(   comp En,
             std::vector<comp> p,
             std::vector<comp> k,
             std::vector<comp> total_P,
@@ -52,6 +73,72 @@ comp QC3_ID(   comp En,
     return F3; 
 
 
+}
+
+/* Here we write down the function that creates the F3 matrix for identical 
+particles, this definition follows strictly the formulation of https://arxiv.org/pdf/2111.12734.pdf
+but will be tested to reproduce the results from fig 1 of https://arxiv.org/pdf/1803.04169.pdf   */
+void F3_ID_mat( Eigen::MatrixXcd &F3mat,
+                comp En, 
+                std::vector< std::vector<comp> > p_config,
+                std::vector< std::vector<comp> > k_config, 
+                std::vector<comp> total_P, 
+                double eta_i, 
+                double scattering_length, 
+                double mi,
+                double mj, 
+                double mk, 
+                double alpha, 
+                double epsilon_h, 
+                double L, 
+                int max_shell_num   )
+{
+    int size = p_config[0].size();
+
+    Eigen::MatrixXcd F2_mat(size,size);
+    Eigen::MatrixXcd K2inv_mat(size,size);
+    Eigen::MatrixXcd G_mat(size,size);
+
+    F2_i_mat( F2_mat, En, p_config, k_config, total_P, mi, mj, mk, L, alpha, epsilon_h, max_shell_num );
+    K2inv_i_mat( K2inv_mat, eta_i, scattering_length, En, p_config, k_config, total_P, mi, mj, mk, epsilon_h, L );
+    G_ij_mat( G_mat, En, p_config, k_config, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    Eigen::MatrixXcd temp_identity_mat(size,size);
+    temp_identity_mat.setIdentity();
+
+    Eigen::MatrixXcd H_mat = K2inv_mat + F2_mat + G_mat; 
+    //H_mat = H_mat*10000;
+    Eigen::MatrixXcd H_mat_inv(size,size);
+    double relerror = 0.0;
+
+    //LinearSolver_3(H_mat, H_mat_inv, temp_identity_mat, relerror);
+    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+    std::cout << "Identity = " << temp_identity_mat << std::endl;
+    //H_mat_inv = H_mat_inv/10000;
+
+    //F3mat = F2_mat/3.0 - F2_mat*H_mat_inv*F2_mat;
+    Eigen::MatrixXcd temp_F3_mat(size,size);
+    Eigen::MatrixXcd temp_mat_A(size,size);
+    temp_mat_A = H_mat_inv*F2_mat;//H_mat.inverse()*F2_mat;
+    temp_F3_mat = F2_mat*temp_mat_A;
+    F3mat = F2_mat/3.0 - temp_F3_mat; 
+
+    char debug = 'y';
+    if(debug=='y')
+    {
+        std::cout << "F2 mat = " << std::endl;
+        std::cout << F2_mat*0.5*L*L*L << std::endl; 
+        std::cout << "========================" << std::endl;
+        std::cout << "G mat = " << std::endl; 
+        std::cout << L*L*L*G_mat << std::endl;
+        std::cout << "========================" << std::endl; 
+        std::cout << "K2inv mat = " << std::endl; 
+        std::cout << K2inv_mat << std::endl; 
+        std::cout << "========================" << std::endl; 
+        std::cout << "FHinvF mat = " << std::endl; 
+        std::cout << temp_F3_mat << std::endl; 
+        std::cout << "========================" << std::endl;
+    }
 }
 
 

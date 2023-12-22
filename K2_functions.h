@@ -18,11 +18,14 @@ comp K2_inv_00( double eta_i, //this is the symmetry factor, eta=1 for piK (i=1)
                 double epsilon_h    )
 {
     double pi = std::acos(-1.0);
-    comp A = eta_i/(8.0*pi*sigma_i);
+    comp A = eta_i/(8.0*pi*std::sqrt(sigma_i));
     comp B = -1.0/scattering_length; 
-    comp C = std::abs(q2psq_star(sigma_i, mj, mk));
+    comp C = std::abs(std::sqrt(q2psq_star(sigma_i, mj, mk)));
     comp D = 1.0 - cutoff_function_1(sigma_i, mj, mk, epsilon_h);
 
+    //std::cout << "q = " << C << std::endl; 
+    //std::cout << "cutoff = "<< cutoff_function_1(sigma_i, mj, mk, epsilon_h) << std::endl; 
+    //std::cout << "CD = " <<C*D << std::endl;
     return A*(B + C*D);
 }
 
@@ -111,7 +114,17 @@ void K2inv_i_mat(   Eigen::MatrixXcd &K2inv,
 
                 comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
 
-                comp sig_k = sigma(En, spec_k, mi, total_P_val);
+                comp Pminusk_x = Px - kx;
+                comp Pminusk_y = Py - ky;
+                comp Pminusk_z = Pz - kz; 
+                comp Pminusk = std::sqrt(Pminusk_x*Pminusk_x + Pminusk_y*Pminusk_y + Pminusk_z*Pminusk_z);
+
+
+                comp sig_k = (En - omega_func(spec_k,mi))*(En - omega_func(spec_k,mi)) - Pminusk*Pminusk;
+
+                
+
+                //comp sig_k = sigma(En, spec_k, mi, total_P_val);
 
                 comp K2_inv_val = K2_inv_00(eta_i, scattering_length, sig_k, mj, mk, epsilon_h);
 

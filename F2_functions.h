@@ -48,8 +48,17 @@ comp pmom(  comp En,
             comp sigk,
             double m    )
 {
-    return sqrt(kallentriangle(En*En,sigk,m*m))/(2.0*sqrt(En*En));
+    return std::sqrt(kallentriangle(En*En,sigk,m*m))/(2.0*sqrt(En*En));
 }
+
+comp kmax_for_P0(   comp En, 
+                    double m )
+{
+    comp A = (En*En + m*m)/(2.0*En);
+
+    return A*A - m*m;
+}
+
 
 comp Jfunc( comp z  )
 {
@@ -360,15 +369,93 @@ void config_maker(  std::vector< std::vector<comp> > &p_config,
                     {
                         p_config[0].push_back(px);
                         p_config[1].push_back(py);
-                        p_config[2].push_back(pz); 
+                        p_config[2].push_back(pz);
+                        std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
+                        std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
+                        std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                 
                     }
                     else 
                     {
                         continue; 
                     }
-                    std::cout << "n = " << i << j << k << " nsq = " << nsq << std::endl; 
-                    std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
-                    std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                }
+            }
+        }
+    }
+    //std::cout << "nmax = " << nmax << '\t' << "nval = " << (L/(2.0*pi))*abs(kmax) << '\t' 
+    //          << "kmax = " << kmax << std::endl;
+}
+
+
+/* This config maker is based upon the cutoff function H(k) instead of kmax */
+void config_maker_1(  std::vector< std::vector<comp> > &p_config,
+                    comp En,
+                    std::vector<comp> total_P,
+                    double mi,
+                    double mj, 
+                    double mk,
+                    double L,
+                    double epsilon_h,
+                    double tolerance    )
+{
+    double pi = std::acos(-1.0);
+
+    //comp cutoff = cutoff_function_1(sig_k,mj, mk, epsilon_h);
+    //comp kmax = pmom(En,0.0,mi);
+    comp kmax = kmax_for_P0(En, mi);
+
+    int nmax = (int)ceil((L/(2.0*pi))*abs(kmax));
+
+    int nmaxsq = nmax*nmax; 
+
+    for(int i=-nmax; i<nmax + 1; ++i)
+    {
+        for(int j=-nmax; j<nmax + 1; ++j)
+        {
+            for(int k=-nmax; k<nmax + 1; ++k)
+            {
+                int nsq = i*i + j*j + k*k; 
+                //if(nsq<=nmaxsq)
+                {
+                    comp px = (2.0*pi/L)*i;
+                    comp py = (2.0*pi/L)*j;
+                    comp pz = (2.0*pi/L)*k; 
+
+                    comp p = std::sqrt(px*px + py*py + pz*pz);
+
+                    comp Px = total_P[0];
+                    comp Py = total_P[1];
+                    comp Pz = total_P[2];
+
+                    comp Pminusp_x = Px - px;
+                    comp Pminusp_y = Py - py;
+                    comp Pminusp_z = Pz - pz; 
+                    comp Pminusp = std::sqrt(Pminusp_x*Pminusp_x + Pminusp_y*Pminusp_y + Pminusp_z*Pminusp_z);
+
+
+                    comp sig_k = (En - omega_func(p,mi))*(En - omega_func(p,mi)) - Pminusp*Pminusp; 
+
+                    comp cutoff = cutoff_function_1(sig_k, mj, mk, epsilon_h);
+                    
+                    double tmp = abs(cutoff);
+                    if(tmp<tolerance) tmp = 0.0;
+                    //if(abs(p)<=abs(kmax))
+                    if(tmp>0.0)
+                    {
+                        p_config[0].push_back(px);
+                        p_config[1].push_back(py);
+                        p_config[2].push_back(pz);
+                        //std::cout << "cutoff = " << cutoff << std::endl;
+                        //std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
+                        //std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
+                        //std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                 
+                    }
+                    else 
+                    {
+                        continue; 
+                    }
                 }
             }
         }
