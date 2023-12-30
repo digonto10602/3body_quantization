@@ -77,7 +77,9 @@ comp F3_ID(   comp En,
 
 /* Here we write down the function that creates the F3 matrix for identical 
 particles, this definition follows strictly the formulation of https://arxiv.org/pdf/2111.12734.pdf
-but will be tested to reproduce the results from fig 1 of https://arxiv.org/pdf/1803.04169.pdf   */
+but will be tested to reproduce the results from fig 1 of https://arxiv.org/pdf/1803.04169.pdf
+p.s. Here the F2 function is multiplied with 0.5 to match that of Raul's paper. This
+0.5 comes from the usage of identical particles.   */
 void F3_ID_mat( Eigen::MatrixXcd &F3mat,
                 comp En, 
                 std::vector< std::vector<comp> > p_config,
@@ -103,6 +105,13 @@ void F3_ID_mat( Eigen::MatrixXcd &F3mat,
     K2inv_i_mat( K2inv_mat, eta_i, scattering_length, En, p_config, k_config, total_P, mi, mj, mk, epsilon_h, L );
     G_ij_mat( G_mat, En, p_config, k_config, total_P, mi, mj, mk, L, epsilon_h ); 
 
+    //Here we change the matrices to the definition of 
+    //Raul's paper
+
+    F2_mat = 0.5*F2_mat*L*L*L;
+    G_mat = L*L*L*G_mat;
+    K2inv_mat = K2inv_mat*L*L*L; 
+
     Eigen::MatrixXcd temp_identity_mat(size,size);
     temp_identity_mat.setIdentity();
 
@@ -112,31 +121,33 @@ void F3_ID_mat( Eigen::MatrixXcd &F3mat,
     double relerror = 0.0;
 
     //LinearSolver_3(H_mat, H_mat_inv, temp_identity_mat, relerror);
-    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
-    std::cout << "Identity = " << temp_identity_mat << std::endl;
+    //LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+
+    //std::cout << "Identity = " << temp_identity_mat << std::endl;
     //H_mat_inv = H_mat_inv/10000;
 
     //F3mat = F2_mat/3.0 - F2_mat*H_mat_inv*F2_mat;
     Eigen::MatrixXcd temp_F3_mat(size,size);
     Eigen::MatrixXcd temp_mat_A(size,size);
-    temp_mat_A = H_mat_inv*F2_mat;//H_mat.inverse()*F2_mat;
-    temp_F3_mat = F2_mat*temp_mat_A;
-    F3mat = F2_mat/3.0 - temp_F3_mat; 
+    //temp_mat_A = H_mat_inv*F2_mat;//H_mat.inverse()*F2_mat;
+    //temp_F3_mat = F2_mat*temp_mat_A;
+    
+    F3mat = (1.0/(L*L*L))*(F2_mat/3.0 - F2_mat*H_mat.inverse()*F2_mat);//temp_F3_mat; 
 
-    char debug = 'y';
+    char debug = 'n';
     if(debug=='y')
     {
         std::cout << "F2 mat = " << std::endl;
-        std::cout << F2_mat*0.5*L*L*L << std::endl; 
+        std::cout << F2_mat<< std::endl; 
         std::cout << "========================" << std::endl;
         std::cout << "G mat = " << std::endl; 
-        std::cout << L*L*L*G_mat << std::endl;
+        std::cout << G_mat << std::endl;
         std::cout << "========================" << std::endl; 
         std::cout << "K2inv mat = " << std::endl; 
-        std::cout << K2inv_mat << std::endl; 
+        std::cout << K2inv_mat/(L*L*L) << std::endl; 
         std::cout << "========================" << std::endl; 
-        std::cout << "FHinvF mat = " << std::endl; 
-        std::cout << temp_F3_mat << std::endl; 
+        std::cout << "F3 mat = " << std::endl; 
+        std::cout << F3mat << std::endl; 
         std::cout << "========================" << std::endl;
     }
 }

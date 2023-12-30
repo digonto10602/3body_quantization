@@ -226,7 +226,7 @@ void test_G_ij_mat()
 
 void test_F3_mat()
 {
-    double En = 2.5;
+    double En = 3.1;
     double L = 6;
     double mi = 1.0;
     double mj = 1.0;
@@ -234,7 +234,7 @@ void test_F3_mat()
 
     double alpha = 0.5;
     double epsilon_h = 0.0;
-    int max_shell_num = 50;
+    int max_shell_num = 18;
     double eta_i = 0.5;
     double scattering_length = -10.0;
 
@@ -263,7 +263,10 @@ void test_F3_mat()
         comp pz = p_config[2][i];
         comp spec_p = std::sqrt(px*px + py*py + pz*pz);
 
-        std::cout << "p = " << spec_p << std::endl; 
+        std::cout << "p = " << spec_p << '\t'
+                  << "px= " << px     << '\t'
+                  << "py= " << py     << '\t'
+                  << "pz= " << pz     << std::endl; 
     }
 
     int size = p_config[0].size(); 
@@ -292,7 +295,7 @@ void test_F3_mat_vs_En()
     
     double En_initial = 2.5;
     double En_final = 4.5;
-    double En_points = 1000.0;
+    double En_points = 3000.0;
     double del_En = abs(En_initial - En_final)/En_points; 
 
     std::ofstream fout; 
@@ -328,8 +331,8 @@ void test_F3_mat_vs_En()
         //std::cout << F3_mat << std::endl;            
         comp res = F3_mat.sum();
         //std::cout << F3_mat << std::endl; 
-        std::cout << "En = " << En << " F3 = " << res << std::endl;
-        fout << En << '\t' << real(res) << '\t' << imag(res) << std::endl; 
+        std::cout << "En = " << En << " F3 = " << res << " matrix size = " << size << std::endl;
+        fout << std::setprecision(20) << En << '\t' << real(res) << '\t' << imag(res) << std::endl; 
     }
 
     fout.close();
@@ -348,8 +351,8 @@ int main()
     //test_F2_i_mat();
     //test_K2_i_mat();
     //test_G_ij_mat();
-    test_F3_mat();
-    //test_F3_mat_vs_En();
+    //test_F3_mat();
+    test_F3_mat_vs_En();
     
     return 0;
 }

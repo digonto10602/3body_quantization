@@ -224,7 +224,7 @@ comp I00_sum_F(     comp En,
                 comp naz = (comp) k;
 
                 comp nax_npPx = nax*npPx;
-                comp nay_npPy = naz*npPy;
+                comp nay_npPy = nay*npPy;
                 comp naz_npPz = naz*npPz; 
 
                 comp na_dot_npP = nax_npPx + nay_npPy + naz_npPz;
@@ -283,6 +283,7 @@ comp F2_i1( comp En,
             double epsilon_h,
             int max_shell_num    )
 {
+    char debug = 'n';
     comp kx = k[0];
     comp ky = k[1];
     comp kz = k[2];
@@ -305,6 +306,22 @@ comp F2_i1( comp En,
 
     comp omega_p = omega_func(spec_p,mi);
 
+    if(debug=='y')
+    {
+        std::cout << "p1x = " << px << '\t'
+                  << "p1y = " << py << '\t'
+                  << "p1z = " << pz << std::endl; 
+        std::cout << "k1x = " << kx << '\t'
+                  << "k1y = " << ky << '\t'
+                  << "k1z = " << kz << std::endl;
+        std::cout << "spec_k = " << spec_k << '\t'
+                  << "spec_p = " << spec_p << std::endl; 
+        std::cout << "total_P = " << total_P_val << std::endl; 
+        std::cout << "sig_p = " << sigp << '\t'
+                  << "cutoff = " << cutoff << '\t' 
+                  << "omega_p = " << omega_p << std::endl; 
+    }
+
     //condition for the delta function
     int condition_delta = 0;
 
@@ -315,6 +332,11 @@ comp F2_i1( comp En,
     else 
     {
         condition_delta = 1;
+    }
+
+    if(debug=='y')
+    {
+        std::cout << "condition delta = " << condition_delta << std::endl; 
     }
     
     if(condition_delta==1) return 0.0;
@@ -327,6 +349,14 @@ comp F2_i1( comp En,
 
         comp C = I0F(En, sigp, spec_p, total_P_val, alpha, mi, mj, mk, L);
         //std::cout<<A<<'\t'<<B<<'\t'<<C<<std::endl; 
+
+        if(debug=='y')
+        {
+            std::cout << "cutoff times constant = " << A << std::endl;  
+            std::cout << "sum = " << B << std::endl; 
+            std::cout << "analytical res = " << C << std::endl; 
+            std::cout << std::endl; 
+        }
 
         return A*(B - C);
     }
@@ -482,8 +512,19 @@ void F2_i_mat(  Eigen::MatrixXcd &F2,
                 double epsilon_h,
                 int max_shell_num  )
 {
+    char debug = 'n';
+
+    if(debug=='y')
+    {
+        std::cout << "We will print out the components of F2 matrix" << std::endl;
+        std::cout << "(F2_i_mat function from F2_functions.h)" << std::endl; 
+    }
     for(int i=0; i<p_config[0].size(); ++i)
     {
+        if(debug=='y')
+        {
+            std::cout << "-------------------------------------" << std::endl; 
+        }
         for(int j=0; j<k_config[0].size(); ++j)
         {
             comp px = p_config[0][i];
@@ -516,8 +557,32 @@ void F2_i_mat(  Eigen::MatrixXcd &F2,
 
             F2(i,j) = F2_val;
 
+            if(debug=='y')
+            {
+                std::cout << "i = " << i << '\t' << "j = " << j << std::endl; 
+                std::cout << "px = " << px << '\t'
+                          << "py = " << py << '\t'
+                          << "pz = " << pz << std::endl; 
+                std::cout << "kx = " << kx << '\t'
+                          << "ky = " << ky << '\t'
+                          << "kz = " << kz << std::endl;
+                std::cout << "F2 val = " << 0.5*F2_val*L*L*L << std::endl;
+                std::cout << "-------------------------------------" << std::endl;
+            }
+
+            
+
 
         }
+        if(debug=='y')
+        {
+            std::cout << "-------------------------------------" << std::endl; 
+        }
+    }
+
+    if(debug=='y')
+    {
+        std::cout << "=========================================" << std::endl; 
     }
 }
             
