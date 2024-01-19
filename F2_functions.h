@@ -435,7 +435,8 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
     //comp kmax = pmom(En,0.0,mi);
     comp kmax = kmax_for_P0(En, mi);
 
-    int nmax = (int)ceil((L/(2.0*pi))*abs(kmax));
+    int nmax = 20;//(int)ceil((L/(2.0*pi))*abs(kmax));
+    //std::cout<<"Nmax = "<<nmax<<std::endl;
 
     int nmaxsq = nmax*nmax; 
 
@@ -467,11 +468,14 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
                     comp sig_k = (En - omega_func(p,mi))*(En - omega_func(p,mi)) - Pminusp*Pminusp; 
 
                     comp cutoff = cutoff_function_1(sig_k, mj, mk, epsilon_h);
-                    
+
+                    //std::cout<<"kmax = "<<kmax<<'\t'<<"p = "<<p<<'\t'<<"sigi = "<<sig_k<<'\t'<<"cutoff = "<<cutoff<<std::endl; 
+                    //std::cout<<"mi="<<mi<<'\t'<<"mj="<<mj<<'\t'<<"mk="<<mk<<std::endl;
                     double tmp = abs(cutoff);
+                    //std::cout<<"cutoff = "<<cutoff<<std::endl; 
                     if(tmp<tolerance) tmp = 0.0;
                     //if(abs(p)<=abs(kmax))
-                    if(tmp>0.0)
+                    if(tmp>0.0 && abs(p)<abs(kmax)) 
                     {
                         p_config[0].push_back(px);
                         p_config[1].push_back(py);
@@ -489,6 +493,17 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
                 }
             }
         }
+    }
+    int check_p_size = 0;
+    int psize0 = p_config[0].size();
+    int psize1 = p_config[1].size();
+    int psize2 = p_config[2].size();
+
+    if(psize0==0 || psize1==0 || psize2==0)
+    {
+        p_config[0].push_back(0.0);
+        p_config[1].push_back(0.0);
+        p_config[2].push_back(0.0);
     }
     //std::cout << "nmax = " << nmax << '\t' << "nval = " << (L/(2.0*pi))*abs(kmax) << '\t' 
     //          << "kmax = " << kmax << std::endl;

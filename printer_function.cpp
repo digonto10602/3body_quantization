@@ -2,6 +2,7 @@
 #include "K2_functions.h"
 #include "G_functions.h"
 #include "QC_functions.h"
+#include "pole_searching.h"
 
 
 
@@ -295,7 +296,7 @@ void test_F3_mat_vs_En()
     
     double En_initial = 2.5;
     double En_final = 4.5;
-    double En_points = 3000.0;
+    double En_points = 2999.0;
     double del_En = abs(En_initial - En_final)/En_points; 
 
     std::ofstream fout; 
@@ -339,9 +340,197 @@ void test_F3_mat_vs_En()
     
 }
 
+void test_F3_nd_2plus1()
+{
+    double En = 3.2;
+    double L = 6;
+
+    double mpi = 1.01;
+    double mK = 1.02;
+
+    double eta_1 = 1.0;
+    double eta_2 = 0.5;
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+
+    double mi = mK;
+    double mj = mK; 
+    double mk = mpi; 
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+    double config_tolerance = 1.0e-5;
+    config_maker_1(p_config, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+
+    std::vector< std::vector<comp> > k_config = p_config; 
+
+        
+
+    int size = p_config[0].size();
+    std::cout<<"size = "<<size<<std::endl;  
+    Eigen::MatrixXcd F3_mat(2*size,2*size);
+
+    F3_ND_2plus1_mat(  F3_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, mpi, mK, alpha, epsilon_h, L, max_shell_num); 
+    
+    double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, 1.0, 0.5, -10, -20, mpi, mK, alpha, epsilon_h, L, max_shell_num); 
+    
+    std::cout<<std::setprecision(10)<<"det of F3 = "<<F3_mat.determinant()<<std::endl; 
+}
+
+void test_detF3inv_vs_En()
+{
+
+    /*  Inputs  */
+    
+    double L = 5;
+
+    double scattering_length_1_piK = 0.15;//-4.04;
+    double scattering_length_2_KK = 0.1;//-4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double atmpi = 50;//0.06906;
+    double atmK = 100;//0.09698;
+
+    atmpi = atmpi/atmK; 
+    atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    double mi = atmK;
+    double mj = atmK;
+    double mk = atmpi; 
+
+    double En_initial = 3.1;//0.26302;
+    double En_final = 3.5;//0.31;
+    double En_points = 10;
+
+    double delE = abs(En_initial - En_final)/En_points; 
+
+    std::ofstream fout; 
+    std::string filename = "det_F3inv_test_L5.dat";
+    fout.open(filename.c_str());
+
+    for(int i=0; i<En_points+1; ++i)
+    {
+        double En = En_initial + i*delE; 
+
+        std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+        double config_tolerance = 1.0e-5;
+        config_maker_1(p_config, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+
+        std::vector< std::vector<comp> > k_config = p_config; 
+
+        
+
+        int size = p_config[0].size();
+        std::cout<<"size = "<<size<<std::endl;  
+        Eigen::MatrixXcd F3_mat(2*size,2*size);
+
+        F3_ND_2plus1_mat(  F3_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+    
+        Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
+        //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+
+        fout << std::setprecision(20) << En << '\t' << real(F3_mat_inv.determinant()) << std::endl;
+        
+        std::cout<<std::setprecision(20);
+        std::cout<< "En = " << En << '\t' << "det of F3inv = "<< real(F3_mat_inv.determinant()) << std::endl; 
+    }
+}
+
+void test_detF3_vs_En()
+{
+
+    /*  Inputs  */
+    
+    double L = 20;
+
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double atmpi = 0.06906;
+    double atmK = 0.09698;
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    double mi = atmK;
+    double mj = atmK;
+    double mk = atmpi; 
+
+    double En_initial = 0.26302;
+    double En_final = 0.31;
+    double En_points = 10;
+
+    double delE = abs(En_initial - En_final)/En_points; 
+
+    std::ofstream fout; 
+    std::string filename = "det_F3_test_L6.dat";
+    fout.open(filename.c_str());
+
+    for(int i=0; i<En_points+1; ++i)
+    {
+        double En = En_initial + i*delE; 
+
+        std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+        double config_tolerance = 1.0e-5;
+        config_maker_1(p_config, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+
+        std::vector< std::vector<comp> > k_config = p_config; 
+
+        
+
+        int size = p_config[0].size();
+        std::cout<<"size = "<<size<<std::endl;  
+        Eigen::MatrixXcd F3_mat(2*size,2*size);
+
+        F3_ND_2plus1_mat(  F3_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+    
+        //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+
+        fout << std::setprecision(20) << En << '\t' << abs(F3_mat.determinant()) << std::endl;
+        
+        std::cout<<std::setprecision(20);
+        std::cout<< "En = " << En << '\t' << "det of F3inv = "<< abs(F3_mat.determinant()) << std::endl; 
+    }
+}
+
 
 int main()
 {
+    //This was a test for the identical case for 3particles
     //test_F2_i1_mombased();
     //K2printer();
     //test_F2_i1_mombased_vs_En();
@@ -352,7 +541,17 @@ int main()
     //test_K2_i_mat();
     //test_G_ij_mat();
     //test_F3_mat();
-    test_F3_mat_vs_En();
+    //test_F3_mat_vs_En();
+    //-----------------------------------------------------
+
+    //From here we test for 2+1 system
+    //test_F3_nd_2plus1();
+
+    //test_detF3_vs_En();
+
+    //test_F3inv_pole_searching();
+
+    test_detF3inv_vs_En();
     
     return 0;
 }

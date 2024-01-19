@@ -72,11 +72,15 @@ void G_ij_mat(  Eigen::MatrixXcd &Gmat,
                 double L, 
                 double epsilon_h    )
 {
-    int size = p_config[0].size(); 
+    int size1 = p_config[0].size(); 
+    int size2 = k_config[0].size();
+    std::cout<<"size1 for Gmat = "<<size1<<std::endl; 
+    std::cout<<"size2 for Gmat = "<<size2<<std::endl; 
 
-    for(int i=0; i<size; ++i)
+    for(int i=0; i<size1; ++i)
     {
-        for(int j=0; j<size; ++j)
+
+        for(int j=0; j<size2; ++j)
         {
             comp px = p_config[0][i];
             comp py = p_config[1][i];
@@ -107,6 +111,7 @@ void G_ij_mat(  Eigen::MatrixXcd &Gmat,
             comp Gij_val = G_ij(En, p, k, total_P, mi, mj, mk, L, epsilon_h);
 
             Gmat(i,j) = Gij_val; 
+            std::cout<<i<<'\t'<<j<<'\t'<<Gmat(i,j)<<std::endl; 
         }
     }
 }
