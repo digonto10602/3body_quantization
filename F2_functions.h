@@ -7,6 +7,10 @@
 //#include "gsl/gsl_sf_dawson.h"
 //#include<Eigen/Dense>
 
+//#include "Faddeeva.cc"
+#include "Faddeeva.hh"
+
+
 /* First we code all the function needed for F2 functions, we start with a single F in S-wave
 as needed to check. We follow the paper = https://arxiv.org/pdf/2111.12734.pdf */
 
@@ -30,11 +34,39 @@ comp sigma( comp En,
     return A*A - B*B;
 }
 
+/* This sigma takes the spectator momenta as a vector */
+comp sigma_pvec_based(  comp En, 
+                        std::vector<comp> p,
+                        double mi, 
+                        std::vector<comp> total_P   )
+{
+    comp px = p[0];
+    comp py = p[1];
+    comp pz = p[2];
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz);
+
+    comp Px = total_P[0];
+    comp Py = total_P[1];
+    comp Pz = total_P[2];
+
+    comp Pminusp_x = Px - px; 
+    comp Pminusp_y = Py - py; 
+    comp Pminusp_z = Pz - pz; 
+
+    comp Pminusp_sq = Pminusp_x*Pminusp_x + Pminusp_y*Pminusp_y + Pminusp_z*Pminusp_z; 
+    comp A = En - omega_func(spec_p,mi);
+
+    return A*A - Pminusp_sq; 
+}
+
 comp kallentriangle(    comp x, 
                         comp y, 
                         comp z  )
 {
-    return x*x + y*y + z*z - 2.0*x*y - 2.0*y*z - 2.0*z*x;
+    //return x*x + y*y + z*z - 2.0*x*y - 2.0*y*z - 2.0*z*x;
+    return x*x + y*y + z*z - 2.0*(x*y + y*z + z*x);
+
 }
 
 comp q2psq_star(    comp sigma_i,
@@ -147,8 +179,19 @@ comp I0F(   comp En,
 
     comp A = 4.0*pi*gamma;
     comp B = -std::sqrt(pi/alpha)*(1.0/2.0)*std::exp(alpha*x*x);
-    comp C = (pi*x/2.0)*ERFI_func(std::sqrt(alpha*x*x));
+    //comp C = 0.5*(pi*x)*ERFI_func(std::sqrt(alpha*x*x));
 
+    double relerr = 0.0;
+    comp C = 0.5*(pi*x)*Faddeeva::erfi(std::sqrt(alpha*x*x),relerr);
+
+    char debug = 'n';
+    if(debug=='y')
+    {
+        std::cout<<std::setprecision(25);
+        std::cout<<"constant = "<<A<<std::endl;
+        std::cout<<"factor1 = "<<B<<std::endl; 
+        std::cout<<"factor2 = "<<C<<std::endl; 
+    }
     return A*(B + C);
 
 }
@@ -400,9 +443,9 @@ void config_maker(  std::vector< std::vector<comp> > &p_config,
                         p_config[0].push_back(px);
                         p_config[1].push_back(py);
                         p_config[2].push_back(pz);
-                        std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
-                        std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
-                        std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                        //std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
+                        //std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
+                        //std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
                  
                     }
                     else 

@@ -4,6 +4,7 @@
 #include "F2_functions.h"
 #include<Eigen/Dense>
 
+
 /* We code the K2 functions here, K2inv denotes the first definition that goes in to the
 tilde_K2 function defined in 2.15 and 2.14 equations of the paper https://arxiv.org/pdf/2111.12734.pdf
 */
@@ -20,6 +21,39 @@ comp K2_inv_00( double eta_i, //this is the symmetry factor, eta=1 for piK (i=1)
     double pi = std::acos(-1.0);
     comp A = eta_i/(8.0*pi*std::sqrt(sigma_i));
     comp B = -1.0/scattering_length; 
+
+    //std::cout<<std::setprecision(25);
+    //std::cout<<"qcotdel0 = "<<B<<std::endl;
+    comp C = std::abs(std::sqrt(q2psq_star(sigma_i, mj, mk)));
+    comp D = 1.0 - cutoff_function_1(sigma_i, mj, mk, epsilon_h);
+
+    //std::cout << "q = " << C << std::endl; 
+    //std::cout << "cutoff = "<< cutoff_function_1(sigma_i, mj, mk, epsilon_h) << std::endl; 
+    //std::cout << "CD = " <<C*D << std::endl;
+    return A*(B + C*D);
+}
+
+
+/* This definition of K2inv is made following the definition of K2i_inv
+function in FRL codebase, we find the discreprency is due to how it was defined
+and thus we are going to use our way of writing going forward */
+comp K2_inv_00_test_FRL( double eta_i, //this is the symmetry factor, eta=1 for piK (i=1), and eta=1/2 for KK (i=2)
+                double scattering_length,
+                comp spec_k,
+                comp sigma_i,
+                double mi, 
+                double mj, 
+                double mk,
+                double epsilon_h    )
+{
+    double pi = std::acos(-1.0);
+    comp omk = omega_func(spec_k,mi);
+
+    comp A = eta_i/(16.0*pi*omk*std::sqrt(sigma_i));
+    comp B = -1.0/scattering_length; 
+
+    std::cout<<std::setprecision(25);
+    std::cout<<"qcotdel0 = "<<B<<std::endl;
     comp C = std::abs(std::sqrt(q2psq_star(sigma_i, mj, mk)));
     comp D = 1.0 - cutoff_function_1(sigma_i, mj, mk, epsilon_h);
 
@@ -89,10 +123,11 @@ void K2inv_i_mat(   Eigen::MatrixXcd &K2inv,
                     double epsilon_h, 
                     double L            )
 {
-    int size = p_config[0].size();
-    for(int i=0; i<size; ++i)
+    int size1 = p_config[0].size();
+    int size2 = k_config[0].size();
+    for(int i=0; i<size1; ++i)
     {
-        for(int j=0; j<size; ++j)
+        for(int j=0; j<size2; ++j)
         {
             if(i==j)
             {
