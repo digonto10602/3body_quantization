@@ -693,6 +693,128 @@ void test_individual_functions()
 
 }
 
+void test_individual_functions_KKpi()
+{
+    /*  Inputs  */
+    double pi = std::acos(-1.0);
+    double L = 5;
+
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double atmpi = 0.06906;
+    double atmK = 0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    comp Px = 0.0;
+    comp Py = 0.0;
+    comp Pz = 0.0;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    double mi = atmK;
+    double mj = atmK;
+    double mk = atmpi; 
+
+    double En_initial = 0.26302;
+    double En_final = 0.31;
+    double En_points = 10;
+
+    double delE = abs(En_initial - En_final)/En_points; 
+
+    double En = 0.26303; 
+
+    comp twopibyL = 2.0*pi/L; 
+    comp px = 0.0*twopibyL;
+    comp py = 0.0*twopibyL;
+    comp pz = 0.0*twopibyL;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+    
+    comp kx = 0.0*twopibyL;
+    comp ky = 0.0*twopibyL;
+    comp kz = 0.0*twopibyL;
+
+    comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz); 
+    std::vector<comp> k(3);
+    k[0] = kx; 
+    k[1] = ky; 
+    k[2] = kz; 
+
+    comp Pminusk_x = Px - kx; 
+    comp Pminusk_y = Py - ky; 
+    comp Pminusk_z = Pz - kz; 
+    comp Pminusk = std::sqrt(Pminusk_x*Pminusk_x + Pminusk_y*Pminusk_y + Pminusk_z*Pminusk_z);
+
+    comp sig_k = (En - omega_func(spec_k,mi))*(En - omega_func(spec_k,mi)) - Pminusk*Pminusk; 
+    double chosen_scattering_length = scattering_length_2_KK;
+    comp K2_inv_val = K2_inv_00(eta_2, chosen_scattering_length, sig_k, mj, mk, epsilon_h);
+    comp K2_inv_val_temp = K2_inv_00_test_FRL(eta_2, chosen_scattering_length, spec_k, sig_k, mi, mj, mk, epsilon_h); 
+    
+    comp sigma_vecbased = sigma_pvec_based(En,p,mi,total_P);
+    comp qsq_vec_based = q2psq_star(sigma_vecbased,mj,mk);
+
+    std::cout<<std::setprecision(25);
+
+    std::cout<<"pi = "<<pi<<std::endl; 
+    std::cout<<"h = "<<cutoff_function_1(sig_k, mj, mk, epsilon_h)<<std::endl; 
+    std::cout<<"k = "<<spec_k<<std::endl; 
+    std::cout<<"omega_k = "<<omega_func(spec_k, mi)<<std::endl; 
+    std::cout<<"sig_i = "<<sig_k<<std::endl;
+    std::cout<<"E2kstar = "<<std::sqrt(sig_k)<<std::endl; 
+    std::cout<<"sig_i_vecbased = "<<sigma_vecbased<<std::endl;
+    std::cout<<"qsq vecbased = "<<qsq_vec_based<<std::endl; 
+
+    std::cout<<"q2 = "<<q2psq_star(sig_k, mj, mk)<<std::endl; 
+    std::cout<<"q_abs = "<<std::abs(std::sqrt(q2psq_star(sig_k, mj, mk)))<<std::endl; 
+    std::cout<<"K2_inv = "<<K2_inv_val/(2.0*omega_func(spec_k,mi))<<std::endl; 
+    std::cout<<"K2_inv temp = "<<K2_inv_val_temp<<std::endl; 
+    //std::cout<<"K2_inv = "<<K2_inv_val/std::pow(L,3)<<std::endl; 
+
+    comp F2_val = F2_i1( En, k, p, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+
+    std::cout<<"F2_val = "<<F2_val<<std::endl; 
+
+    std::cout<<"erfi(-0.5) = "<<ERFI_func(-0.5)<<std::endl; 
+
+    double fadeeva_erfi = Faddeeva::erfi(-0.5);
+    std::cout<<"faddeeva erfi(-0.5) = "<<fadeeva_erfi<<std::endl; 
+
+    comp Gij_val = G_ij(En, p, k, total_P, mi, mj, mk, L, epsilon_h);
+
+    std::cout<<"Gij val = "<<Gij_val<<std::endl; 
+
+    // New testing //
+    std::cout<<"========================================="<<std::endl; 
+
+    std::cout<<"h = "<<cutoff_function_1(sig_k, mj, mk, epsilon_h)<<std::endl; 
+    std::cout<<"En = "<<En<<std::endl;
+
+    //sum of 2+1 particle energy = 
+    comp sum_energy = std::sqrt(sig_k + Pminusk*Pminusk) + omega_func(spec_k, mi);
+    std::cout<<"sum energy = "<< sum_energy <<std::endl; 
+
+    //t cut comes in s when sig_i < |mj^2 - mk^2| 
+    
+
+
+}
+
+
 /* This code is the modified version of the checking code above
 this code is to print the -F3inv to get the K3df_iso for different 
 boosted P frames  */
@@ -809,11 +931,11 @@ int main()
     //test_F3inv_pole_searching();
 
     //test_detF3inv_vs_En();
-    test_detF3inv_vs_En_KKpi();
+    //test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
     //test_individual_functions();
-    
+    test_individual_functions_KKpi();
     return 0;
 }
