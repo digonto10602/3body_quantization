@@ -441,7 +441,7 @@ void test_F3_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
     Eigen::MatrixXcd F2_mat_2(size2,size2);
     Eigen::MatrixXcd K2inv_mat_2(size2,size2);
 
-    std::cout << "spec 1 size = " << size1 << '\t' << "spec 2 size = " << size2 << std::endl; 
+    //std::cout << "spec 1 size = " << size1 << '\t' << "spec 2 size = " << size2 << std::endl; 
     
     
     F2_i_mat( F2_mat_2, En, p_config2, k_config2, total_P, mi, mj, mk, L, alpha, epsilon_h, max_shell_num );

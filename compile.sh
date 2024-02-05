@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm printer.o Faddeeva.o 
 
 g++ Faddeeva.cc -c -o Faddeeva.o
 

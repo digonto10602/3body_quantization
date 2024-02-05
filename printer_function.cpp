@@ -697,7 +697,7 @@ void test_individual_functions_KKpi()
 {
     /*  Inputs  */
     double pi = std::acos(-1.0);
-    double L = 5;
+    double L = 20;
 
     double scattering_length_1_piK = -4.04;
     double scattering_length_2_KK = -4.07;
@@ -714,13 +714,15 @@ void test_individual_functions_KKpi()
     double epsilon_h = 0.0;
     int max_shell_num = 20;
 
-    comp Px = 0.0;
+    comp Px = 2.0;
     comp Py = 0.0;
     comp Pz = 0.0;
     std::vector<comp> total_P(3);
     total_P[0] = Px; 
     total_P[1] = Py; 
     total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
 
     double mi = atmK;
     double mj = atmK;
@@ -732,10 +734,10 @@ void test_individual_functions_KKpi()
 
     double delE = abs(En_initial - En_final)/En_points; 
 
-    double En = 0.26303; 
+    double En = 0.3184939100000000245;//0.26303; 
 
     comp twopibyL = 2.0*pi/L; 
-    comp px = 0.0*twopibyL;
+    comp px = 1.0*twopibyL;
     comp py = 0.0*twopibyL;
     comp pz = 0.0*twopibyL;
 
@@ -744,8 +746,12 @@ void test_individual_functions_KKpi()
     p[0] = px; 
     p[1] = py; 
     p[2] = pz; 
+    std::vector<std::vector<comp> > p_config(3,std::vector<comp>());
+    p_config[0].push_back(px);
+    p_config[1].push_back(py);
+    p_config[2].push_back(pz);
     
-    comp kx = 0.0*twopibyL;
+    comp kx = 1.0*twopibyL;
     comp ky = 0.0*twopibyL;
     comp kz = 0.0*twopibyL;
 
@@ -754,7 +760,11 @@ void test_individual_functions_KKpi()
     k[0] = kx; 
     k[1] = ky; 
     k[2] = kz; 
-
+    std::vector<std::vector<comp> > k_config(3,std::vector<comp>());
+    k_config[0].push_back(kx);
+    k_config[1].push_back(ky);
+    k_config[2].push_back(kz);
+    
     comp Pminusk_x = Px - kx; 
     comp Pminusk_y = Py - ky; 
     comp Pminusk_z = Pz - kz; 
@@ -803,13 +813,37 @@ void test_individual_functions_KKpi()
 
     std::cout<<"h = "<<cutoff_function_1(sig_k, mj, mk, epsilon_h)<<std::endl; 
     std::cout<<"En = "<<En<<std::endl;
+    std::cout<<"Ecm calculated = "<<std::sqrt(En*En - spec_P*spec_P)<<std::endl; 
+    std::cout<<"total_P = "<<spec_P<<std::endl; 
 
     //sum of 2+1 particle energy = 
     comp sum_energy = std::sqrt(sig_k + Pminusk*Pminusk) + omega_func(spec_k, mi);
+    //comp sum_energy = std::sqrt(sig_k) + omega_func(spec_k, mi);
+    
     std::cout<<"sum energy = "<< sum_energy <<std::endl; 
 
     //t cut comes in s when sig_i < |mj^2 - mk^2| 
+    double t_cut_threshold_1 = abs(mj*mj - mk*mk);
+    //double t_cut_threshold_2 = abs(mi*mi - m)
+    std::cout<<"t_cut_threshold = "<< t_cut_threshold_1 <<std::endl;
+
+    //Test 2//
+    std::cout<<"=========================================="<<std::endl; 
+    Eigen::MatrixXcd F3_mat;//(Eigen::Dynamic,Eigen::Dynamic);
+    Eigen::MatrixXcd F2_mat;
+    Eigen::MatrixXcd K2i_mat; 
+    Eigen::MatrixXcd G_mat; 
+
+    test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
     
+    //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
+    Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
+        
+    std::cout<<"F3inv det = "<<F3_mat_inv.determinant()<<std::endl; 
+    std::cout<<"F3inv sum = "<<F3_mat_inv.sum()<<std::endl;
+    std::cout<<"F2 det = "<<F2_mat.determinant()<<std::endl; 
+    std::cout<<"K2i det = "<<K2i_mat.determinant()<<std::endl; 
+    std::cout<<"G det = "<<G_mat.determinant()<<std::endl; 
 
 
 }
@@ -844,26 +878,31 @@ void test_detF3inv_vs_En_KKpi()
     double pi = std::acos(-1.0); 
     comp twopibyL = 2.0*pi/L;
 
-    comp Px = 1.0*twopibyL;
+    //std::string filename = "det_F3inv_KKpi_L20_nP_200.dat";
+    std::string filename = "temp";
+    comp Px = 2.0*twopibyL;
     comp Py = 0.0*twopibyL;
     comp Pz = 0.0*twopibyL;
     std::vector<comp> total_P(3);
     total_P[0] = Px; 
     total_P[1] = Py; 
     total_P[2] = Pz; 
+    comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
 
     double mi = atmK;
     double mj = atmK;
     double mk = atmpi; 
     //for nP 100 the first run starts 0.4184939100000000245
-    double En_initial = 0.4184939100000000245;//0.26302;
-    double En_final = 0.51;
+    double KKpi_threshold = atmK + atmK + atmpi; 
+
+    double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+    double En_final = std::sqrt(0.38*0.38 + abs(total_P_val*total_P_val));;
     double En_points = 4000;
 
     double delE = abs(En_initial - En_final)/En_points;
 
     std::ofstream fout; 
-    std::string filename = "det_F3inv_KKpi_L20_nP_100.dat";
     fout.open(filename.c_str());
 
     for(int i=1; i<En_points; ++i)
@@ -890,9 +929,11 @@ void test_detF3inv_vs_En_KKpi()
         //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
         Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
         //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
-
+        comp Ecm_calculated = E_to_Ecm(En, total_P);
         fout    << std::setprecision(20) 
                 << En << '\t' 
+                << real(Ecm_calculated) << '\t'
+                << imag(Ecm_calculated) << '\t'
                 << real(F2_mat.determinant()) << '\t'
                 << real(G_mat.determinant()) << '\t'
                 << real(K2i_mat.determinant()) << '\t'
@@ -900,7 +941,9 @@ void test_detF3inv_vs_En_KKpi()
                 << -real(F3_mat_inv.sum()) << std::endl;
         
         std::cout<<std::setprecision(20);
-        std::cout<< "En = " << En << '\t' 
+        std::cout<< "En = " << En << '\t'
+                 << "Ecm = " << Ecm_calculated << '\t' 
+                 << "det of F3 = "<< F3_mat.determinant() << '\t'
                  << "det of F3inv = "<< real(F3_mat_inv.determinant()) << '\t' 
                  << "K3df_iso = "<< -real(F3_mat_inv.sum()) << std::endl; 
     }

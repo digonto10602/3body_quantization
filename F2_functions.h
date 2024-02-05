@@ -123,6 +123,30 @@ comp cutoff_function_1( comp sigma_i,
     return Jfunc(Z);
 }
 
+comp E_to_Ecm(  comp En,
+                std::vector<comp> total_P )
+{
+    comp Px = total_P[0];
+    comp Py = total_P[1];
+    comp Pz = total_P[2];
+
+    comp tot_P = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+    return std::sqrt(En*En - tot_P*tot_P);
+}
+
+comp Ecm_to_E(  comp En_cm,
+                std::vector<comp> total_P )
+{
+    comp Px = total_P[0];
+    comp Py = total_P[1];
+    comp Pz = total_P[2];
+
+    comp tot_P = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+    return std::sqrt(En_cm*En_cm + tot_P*tot_P);
+}
+
 /*
 
     S-wave F2 function for i = 1
@@ -210,6 +234,7 @@ comp I00_sum_F(     comp En,
                     double L,
                     int max_shell_num    )
 {
+    char debug = 'n';
     double tolerance = 1.0e-11;
     double pi = std::acos(-1.0);
 
@@ -229,6 +254,12 @@ comp I00_sum_F(     comp En,
     //std::cout<<"gamma = "<<gamma<<std::endl;
     comp x = std::sqrt(q2psq_star(sigma_p,mj,mk))*L/(2.0*pi);
     comp xi = 0.5*(1.0 + (mj*mj - mk*mk)/sigma_p);
+
+    std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
+    if(debug='y')
+    {
+        //std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
+    }
 
     comp npPx = (px - Px)*L/(2.0*pi); //this is directed in the z-direction
     comp npPy = (py - Py)*L/(2.0*pi);
@@ -294,11 +325,20 @@ comp I00_sum_F(     comp En,
 
                 comp r = std::sqrt(rx*rx + ry*ry + rz*rz);
 
-                //std::cout<<"npP = "<<npP<<'\t'
-                //         <<"prod1 = "<<prod1<<'\t'
-                //         <<"r = "<<r<<'\t'<<"rx = "<<rx<<'\t'<<"ry = "<<ry<<'\t'<<"rz = "<<rz<<std::endl;
-
+                
+                
                 summ = summ + std::exp(alpha*(x*x - r*r))/(x*x - r*r);
+
+                if(debug=='y')
+                {
+                    //std::cout<<i<<'\t'<<j<<'\t'<<k<<'\t'<<x*x - r*r<<'\t'<<prod1<<'\t'<<summ<<std::endl;
+                    if(!std::isnan(abs(prod1)))
+                    {
+                        //std::cout<<"npP = "<<npP<<'\t'
+                        //     <<"prod1 = "<<prod1<<'\t'
+                        //     <<"r = "<<r<<'\t'<<"rx = "<<rx<<'\t'<<"ry = "<<ry<<'\t'<<"rz = "<<rz<<std::endl;
+                    }
+                }
                 //if(abs(summ - temp_summ)<tolerance)
                 //{
                     //std::cout<<"sum broken at: i="<<i<<'\t'<<"j="<<j<<'\t'<<"k="<<k<<std::endl;
@@ -401,6 +441,11 @@ comp F2_i1( comp En,
             std::cout << std::endl; 
         }
 
+        if(abs(A)==0)
+        {
+            return 0.0;
+        }
+        else
         return A*(B - C);
     }
 
@@ -514,11 +559,15 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
 
                     //std::cout<<"kmax = "<<kmax<<'\t'<<"p = "<<p<<'\t'<<"sigi = "<<sig_k<<'\t'<<"cutoff = "<<cutoff<<std::endl; 
                     //std::cout<<"mi="<<mi<<'\t'<<"mj="<<mj<<'\t'<<"mk="<<mk<<std::endl;
-                    double tmp = abs(cutoff);
+                    double tmp = real(cutoff);
                     //std::cout<<"cutoff = "<<cutoff<<std::endl; 
                     if(tmp<tolerance) tmp = 0.0;
                     //if(abs(p)<=abs(kmax))
-                    if(tmp>0.0 && abs(p)<abs(kmax)) 
+
+                    //this was set last time 
+                    //if(tmp>0.0 && abs(p)<abs(kmax)) 
+                    
+                    if(tmp>=0.0) 
                     {
                         p_config[0].push_back(px);
                         p_config[1].push_back(py);
