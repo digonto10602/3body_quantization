@@ -714,30 +714,34 @@ void test_individual_functions_KKpi()
     double epsilon_h = 0.0;
     int max_shell_num = 20;
 
-    comp Px = 2.0;
-    comp Py = 0.0;
-    comp Pz = 0.0;
+    comp twopibyL = 2.0*pi/L; 
+
+    std::string test_file1 = "qsq_test_KKpi_P111"; //this is the test file for qsq, sigma_p, H(p) data 
+    comp Px = 1.0*twopibyL;
+    comp Py = 1.0*twopibyL;
+    comp Pz = 1.0*twopibyL;
     std::vector<comp> total_P(3);
     total_P[0] = Px; 
     total_P[1] = Py; 
     total_P[2] = Pz; 
 
     comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+    comp total_P_val = spec_P; 
 
     double mi = atmK;
     double mj = atmK;
     double mk = atmpi; 
 
-    double En_initial = 0.26302;
-    double En_final = 0.31;
-    double En_points = 10;
+    //double En_initial = 0.26302;
+    //double En_final = 0.31;
+    //double En_points = 10;
 
-    double delE = abs(En_initial - En_final)/En_points; 
+    //double delE = abs(En_initial - En_final)/En_points; 
 
     double En = 0.3184939100000000245;//0.26303; 
 
-    comp twopibyL = 2.0*pi/L; 
-    comp px = 1.0*twopibyL;
+    
+    comp px = 0.0*twopibyL;
     comp py = 0.0*twopibyL;
     comp pz = 0.0*twopibyL;
 
@@ -751,7 +755,7 @@ void test_individual_functions_KKpi()
     p_config[1].push_back(py);
     p_config[2].push_back(pz);
     
-    comp kx = 1.0*twopibyL;
+    comp kx = 0.0*twopibyL;
     comp ky = 0.0*twopibyL;
     comp kz = 0.0*twopibyL;
 
@@ -828,24 +832,94 @@ void test_individual_functions_KKpi()
     std::cout<<"t_cut_threshold = "<< t_cut_threshold_1 <<std::endl;
 
     //Test 2//
+    char turn_this_on = 'n';
     std::cout<<"=========================================="<<std::endl; 
-    Eigen::MatrixXcd F3_mat;//(Eigen::Dynamic,Eigen::Dynamic);
-    Eigen::MatrixXcd F2_mat;
-    Eigen::MatrixXcd K2i_mat; 
-    Eigen::MatrixXcd G_mat; 
+    if(turn_this_on=='y')
+    {
+        Eigen::MatrixXcd F3_mat;//(Eigen::Dynamic,Eigen::Dynamic);
+        Eigen::MatrixXcd F2_mat;
+        Eigen::MatrixXcd K2i_mat; 
+        Eigen::MatrixXcd G_mat; 
 
-    test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+        test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
     
-    //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
-    Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
+        //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
+        Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
         
-    std::cout<<"F3inv det = "<<F3_mat_inv.determinant()<<std::endl; 
-    std::cout<<"F3inv sum = "<<F3_mat_inv.sum()<<std::endl;
-    std::cout<<"F2 det = "<<F2_mat.determinant()<<std::endl; 
-    std::cout<<"K2i det = "<<K2i_mat.determinant()<<std::endl; 
-    std::cout<<"G det = "<<G_mat.determinant()<<std::endl; 
+        std::cout<<"F3inv det = "<<F3_mat_inv.determinant()<<std::endl; 
+        std::cout<<"F3inv sum = "<<F3_mat_inv.sum()<<std::endl;
+        std::cout<<"F2 det = "<<F2_mat.determinant()<<std::endl; 
+        std::cout<<"K2i det = "<<K2i_mat.determinant()<<std::endl; 
+        std::cout<<"G det = "<<G_mat.determinant()<<std::endl; 
+    }
+    //Test the q^2, x^2, r^2 etc.. for F2 function 
+    std::cout<<"Test for q^2, r^2 =>"<<std::endl; 
 
+    double KKpi_threshold = atmK + atmK + atmpi; 
+    double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
 
+    double Elab1 = 0.01;//std::sqrt(KKpi_threshold*KKpi_threshold + abs(total_P_val*total_P_val));
+    //double Elab2 = std::sqrt(0.38*0.38 + abs(total_P_val*total_P_val));
+    double Elab2 = std::sqrt(KKpipi_threshold*KKpipi_threshold + abs(total_P_val*total_P_val));
+
+    double En_initial = Elab1;//.27;//0.4184939100000000245;//0.26302;
+    double En_final = Elab2;
+    double En_points = 4000;
+
+    double delE = abs(En_initial - En_final)/En_points;
+    std::ofstream fout1;
+    
+    fout1.open(test_file1.c_str());
+    for(int i=0;i<En_points+1;++i)
+    {
+        double En = En_initial + i*delE; 
+        comp sig_p = sigma(En,spec_p,mi,total_P_val);
+        std::cout<<"ran here"<<std::endl;
+        comp sigma_vecbased1 = sigma_pvec_based(En,p,mi,total_P);
+        comp qsq = q2psq_star(sig_p,mj,mk);
+        comp qsq_vec_based1 = q2psq_star(sigma_vecbased1,mj,mk);
+        comp cutoff1 = cutoff_function_1(sig_p,mj,mk,epsilon_h);
+        comp cutoff2 = cutoff_function_1(sigma_vecbased1,mj,mk,epsilon_h);
+
+        comp Ecm = E_to_Ecm(En,total_P);
+
+        comp newsigma = (En - omega_func(spec_p,mi))*(En - omega_func(spec_p,mi)) - Pminusk*Pminusk; 
+        comp check_sig_zero1 = abs(total_P_val - spec_p) + omega_func(spec_p,mi);
+        comp check_sig_zero2 = -abs(total_P_val - spec_p) + omega_func(spec_p,mi);
+        std::cout<<"E="<<En<<'\t'
+                 <<"Ecm="<<Ecm<<'\t'
+                 <<"sigp="<<sig_p<<'\t'
+                 <<"qsq="<<qsq<<'\t'
+                 <<"sigpV="<<sigma_vecbased1<<'\t'
+                 //<<"newsigma="<<newsigma<<'\t'
+                 <<"qsqV="<<qsq_vec_based1<<'\t'
+                 <<"cut1="<<cutoff1<<'\t'
+                 <<"cut2="<<cutoff2<<'\t'
+                 <<"mjsq-mksq"<<std::abs(mj*mj - mk*mk)<<'\t'
+                 <<"checksigzero1="<<E_to_Ecm(check_sig_zero1,total_P)<<'\t'
+                 <<"checksigzero2="<<E_to_Ecm(check_sig_zero2,total_P)<<std::endl; 
+
+        fout1<<En<<'\t'
+            <<real(Ecm)<<'\t'
+            <<imag(Ecm)<<'\t'
+            <<real(sig_p)<<'\t'
+            <<imag(sig_p)<<'\t'
+            <<real(qsq)<<'\t'
+            <<imag(qsq)<<'\t'
+            <<real(cutoff1)<<'\t'
+            <<imag(cutoff1)<<'\t'
+            <<real(E_to_Ecm(check_sig_zero1,total_P))<<'\t'
+            <<imag(E_to_Ecm(check_sig_zero1,total_P))<<'\t'
+            <<real(E_to_Ecm(check_sig_zero2,total_P))<<'\t'
+            <<imag(E_to_Ecm(check_sig_zero2,total_P))<<'\t'
+            <<KKpi_threshold<<std::endl; 
+        
+    }
+    fout1.close();
+
+    /*===================================================*/
+    
+    
 }
 
 
