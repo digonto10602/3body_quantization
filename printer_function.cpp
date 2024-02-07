@@ -716,10 +716,10 @@ void test_individual_functions_KKpi()
 
     comp twopibyL = 2.0*pi/L; 
 
-    std::string test_file1 = "qsq_test_KKpi_P111"; //this is the test file for qsq, sigma_p, H(p) data 
-    comp Px = 1.0*twopibyL;
-    comp Py = 1.0*twopibyL;
-    comp Pz = 1.0*twopibyL;
+    std::string test_file1 = "qsq_test_KKpi_2body_KK_P200"; //this is the test file for qsq, sigma_p, H(p) data 
+    comp Px = 2.0*twopibyL;
+    comp Py = 0.0*twopibyL;
+    comp Pz = 0.0*twopibyL;
     std::vector<comp> total_P(3);
     total_P[0] = Px; 
     total_P[1] = Py; 
@@ -728,9 +728,9 @@ void test_individual_functions_KKpi()
     comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
     comp total_P_val = spec_P; 
 
-    double mi = atmK;
+    double mi = atmpi;//atmK;
     double mj = atmK;
-    double mk = atmpi; 
+    double mk = atmK;//atmpi; 
 
     //double En_initial = 0.26302;
     //double En_final = 0.31;
@@ -952,9 +952,9 @@ void test_detF3inv_vs_En_KKpi()
     double pi = std::acos(-1.0); 
     comp twopibyL = 2.0*pi/L;
 
-    //std::string filename = "det_F3inv_KKpi_L20_nP_200.dat";
-    std::string filename = "temp";
-    comp Px = 2.0*twopibyL;
+    std::string filename = "F3_KKpi_L20_nP_000.dat";
+    //std::string filename = "temp";
+    comp Px = 0.0*twopibyL;
     comp Py = 0.0*twopibyL;
     comp Pz = 0.0*twopibyL;
     std::vector<comp> total_P(3);
@@ -969,9 +969,11 @@ void test_detF3inv_vs_En_KKpi()
     double mk = atmpi; 
     //for nP 100 the first run starts 0.4184939100000000245
     double KKpi_threshold = atmK + atmK + atmpi; 
+    double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
+    double KKKK_threshold = 4.0*atmK; 
 
     double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
-    double En_final = std::sqrt(0.38*0.38 + abs(total_P_val*total_P_val));;
+    double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
     double En_points = 4000;
 
     double delE = abs(En_initial - En_final)/En_points;
@@ -1011,9 +1013,14 @@ void test_detF3inv_vs_En_KKpi()
                 << real(F2_mat.determinant()) << '\t'
                 << real(G_mat.determinant()) << '\t'
                 << real(K2i_mat.determinant()) << '\t'
-                << real(F3_mat_inv.determinant()) << '\t'
-                << -real(F3_mat_inv.sum()) << std::endl;
-        
+                //this is for F3 determinant
+                << real(F3_mat.determinant()) << '\t'
+                //this is for F3inv determinant
+                //<< real(F3_mat_inv.determinant()) << '\t'
+                //this is for K3iso
+                //<< -real(F3_mat_inv.sum()) << std::endl;
+                //for F3iso 
+                << real(F3_mat.sum()) << std::endl;
         std::cout<<std::setprecision(20);
         std::cout<< "En = " << En << '\t'
                  << "Ecm = " << Ecm_calculated << '\t' 
@@ -1048,11 +1055,11 @@ int main()
     //test_F3inv_pole_searching();
 
     //test_detF3inv_vs_En();
-    //test_detF3inv_vs_En_KKpi();
+    test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
     //test_individual_functions();
-    test_individual_functions_KKpi();
+    //test_individual_functions_KKpi();
     return 0;
 }

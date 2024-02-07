@@ -255,9 +255,10 @@ comp I00_sum_F(     comp En,
     comp x = std::sqrt(q2psq_star(sigma_p,mj,mk))*L/(2.0*pi);
     comp xi = 0.5*(1.0 + (mj*mj - mk*mk)/sigma_p);
 
-    std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
-    if(debug='y')
+    if(debug=='y')
     {
+        std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
+
         //std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
     }
 
