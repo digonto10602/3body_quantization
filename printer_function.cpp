@@ -952,9 +952,9 @@ void test_detF3inv_vs_En_KKpi()
     double pi = std::acos(-1.0); 
     comp twopibyL = 2.0*pi/L;
 
-    std::string filename = "F3_KKpi_L20_nP_000.dat";
+    std::string filename = "F3_KKpi_L20_nP_100.dat";
     //std::string filename = "temp";
-    comp Px = 0.0*twopibyL;
+    comp Px = 1.0*twopibyL;
     comp Py = 0.0*twopibyL;
     comp Pz = 0.0*twopibyL;
     std::vector<comp> total_P(3);
@@ -972,7 +972,7 @@ void test_detF3inv_vs_En_KKpi()
     double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
     double KKKK_threshold = 4.0*atmK; 
 
-    double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+    double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
     double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
     double En_points = 4000;
 
@@ -991,7 +991,6 @@ void test_detF3inv_vs_En_KKpi()
 
         std::vector< std::vector<comp> > k_config = p_config; 
 
-        
 
         int size = p_config[0].size();
         //std::cout<<"size = "<<size<<std::endl;  
@@ -1000,10 +999,12 @@ void test_detF3inv_vs_En_KKpi()
         Eigen::MatrixXcd K2i_mat; 
         Eigen::MatrixXcd G_mat; 
 
+
         test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
+        //std::cout<<"ran until here"<<std::endl;
     
         //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
-        Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
+        //Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
         //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, max_shell_num); 
         comp Ecm_calculated = E_to_Ecm(En, total_P);
         fout    << std::setprecision(20) 
@@ -1025,9 +1026,162 @@ void test_detF3inv_vs_En_KKpi()
         std::cout<< "En = " << En << '\t'
                  << "Ecm = " << Ecm_calculated << '\t' 
                  << "det of F3 = "<< F3_mat.determinant() << '\t'
-                 << "det of F3inv = "<< real(F3_mat_inv.determinant()) << '\t' 
-                 << "K3df_iso = "<< -real(F3_mat_inv.sum()) << std::endl; 
+                 //<< "det of F3inv = "<< real(F3_mat_inv.determinant()) << '\t' 
+                 //<< "K3df_iso = "<< -real(F3_mat_inv.sum()) << std::endl;
+                 << std::endl; 
+    }               
+}
+
+
+void test_F2_vs_sigp()
+{
+    /*  Inputs  */
+    double pi = std::acos(-1.0);
+    double L = 20;
+
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double atmpi = 0.5;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    comp twopibyL = 2.0*pi/L; 
+
+    std::string test_file1 = "F2_vs_sigp_2body_piK_P000.dat"; //this is the test file for qsq, sigma_p, H(p) data 
+    comp Px = 0.0*twopibyL;
+    comp Py = 0.0*twopibyL;
+    comp Pz = 0.0*twopibyL;
+    std::vector<comp> total_P(3);
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+    comp total_P_val = spec_P; 
+
+    double mi = atmK;
+    double mj = atmK;
+    double mk = atmpi; 
+
+    //double En_initial = 0.26302;
+    //double En_final = 0.31;
+    //double En_points = 10;
+
+    //double delE = abs(En_initial - En_final)/En_points; 
+
+    double En = 2.9;//0.3184939100000000245;//0.26303; 
+
+    
+    comp px = 0.0*twopibyL;
+    comp py = 0.0*twopibyL;
+    comp pz = 0.0*twopibyL;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+    std::vector<std::vector<comp> > p_config(3,std::vector<comp>());
+    p_config[0].push_back(px);
+    p_config[1].push_back(py);
+    p_config[2].push_back(pz);
+    
+    comp kx = 0.0*twopibyL;
+    comp ky = 0.0*twopibyL;
+    comp kz = 0.0*twopibyL;
+
+    comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz); 
+    std::vector<comp> k(3);
+    k[0] = kx; 
+    k[1] = ky; 
+    k[2] = kz; 
+    std::vector<std::vector<comp> > k_config(3,std::vector<comp>());
+    k_config[0].push_back(kx);
+    k_config[1].push_back(ky);
+    k_config[2].push_back(kz);
+    
+    comp Pminusk_x = Px - kx; 
+    comp Pminusk_y = Py - ky; 
+    comp Pminusk_z = Pz - kz; 
+    comp Pminusk = std::sqrt(Pminusk_x*Pminusk_x + Pminusk_y*Pminusk_y + Pminusk_z*Pminusk_z);
+
+    comp sig_k = (En - omega_func(spec_k,mi))*(En - omega_func(spec_k,mi)) - Pminusk*Pminusk; 
+    double chosen_scattering_length = scattering_length_2_KK;
+    comp K2_inv_val = K2_inv_00(eta_2, chosen_scattering_length, sig_k, mj, mk, epsilon_h);
+    comp K2_inv_val_temp = K2_inv_00_test_FRL(eta_2, chosen_scattering_length, spec_k, sig_k, mi, mj, mk, epsilon_h); 
+    
+    comp sigma_vecbased = sigma_pvec_based(En,p,mi,total_P);
+    comp qsq_vec_based = q2psq_star(sigma_vecbased,mj,mk);
+
+    std::cout<<std::setprecision(25);
+
+    int nmax = 20;
+    std::vector<std::vector<int> > n_config(3,std::vector<int>());
+
+    for(int i=-nmax;i<nmax+1;++i)
+    {
+        for(int j=-nmax;j<nmax+1;++j)
+        {
+            for(int k=-nmax;k<nmax+1;++k)
+            {
+                int nsq = i*i + j*j + k*k;
+                if(nsq<=10)
+                {
+                    n_config[0].push_back(i);
+                    n_config[1].push_back(j);
+                    n_config[2].push_back(k);
+            
+                }
+            }
+        }
     }
+
+    int config_size = n_config[0].size(); 
+
+    std::ofstream fout1;
+    fout1.open(test_file1.c_str());
+
+    for(int i=0;i<config_size;++i)
+    {
+        int nx = n_config[0][i];
+        int ny = n_config[1][i];
+        int nz = n_config[2][i];
+
+        int nsq = nx*nx + ny*ny + nz*nz; 
+        comp px1 = twopibyL*((comp)nx);
+        comp py1 = twopibyL*((comp)ny);
+        comp pz1 = twopibyL*((comp)nz);
+
+        std::vector<comp> p1(3);
+        p1[0] = px1;
+        p1[1] = py1;
+        p1[2] = pz1; 
+
+        comp spec_p = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
+        comp sig_p = sigma_pvec_based(En, p1, mi, total_P);
+
+        comp F2 = F2_i1(En, p1, p1, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+
+        fout1 << i << '\t' << nsq << '\t' << real(spec_p) << '\t' << imag(spec_p) << '\t'
+              << real(sig_p) << '\t' << imag(sig_p) << '\t' << real(F2) << '\t' << imag(F2) << std::endl; 
+
+        std::cout << "i = " << i << '\t' 
+                  << "nsq = " << nsq << '\t' 
+                  << "spec_p = " << spec_p << '\t'
+                  << "sig_p = " << sig_p << '\t' 
+                  << "F2 = " << F2 << std::endl; 
+
+    }
+    fout1.close();
 }
 
 
@@ -1055,11 +1209,13 @@ int main()
     //test_F3inv_pole_searching();
 
     //test_detF3inv_vs_En();
-    test_detF3inv_vs_En_KKpi();
+    //test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
     //test_individual_functions();
     //test_individual_functions_KKpi();
+    
+    test_F2_vs_sigp();
     return 0;
 }

@@ -262,7 +262,7 @@ comp I00_sum_F(     comp En,
         //std::cout<<"x = "<<x<<'\t'<<"sig_p = "<<sigma_p<<std::endl;
     }
 
-    comp npPx = (px - Px)*L/(2.0*pi); //this is directed in the z-direction
+    comp npPx = (px - Px)*L/(2.0*pi); 
     comp npPy = (py - Py)*L/(2.0*pi);
     comp npPz = (pz - Pz)*L/(2.0*pi);
 
@@ -367,7 +367,7 @@ comp F2_i1( comp En,
             double epsilon_h,
             int max_shell_num    )
 {
-    char debug = 'n';
+    char debug = 'y';
     comp kx = k[0];
     comp ky = k[1];
     comp kz = k[2];
@@ -384,7 +384,7 @@ comp F2_i1( comp En,
     comp spec_p = std::sqrt(px*px + py*py + pz*pz);
     comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
 
-    comp sigp = sigma(En, spec_p, mi, total_P_val);
+    comp sigp = sigma_pvec_based(En,p,mi,total_P);//sigma(En, spec_p, mi, total_P_val);
 
     comp cutoff = cutoff_function_1(sigp, mj, mk, epsilon_h);
 
@@ -518,6 +518,7 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
                     double epsilon_h,
                     double tolerance    )
 {
+    char debug = 'n';
     double pi = std::acos(-1.0);
 
     //comp cutoff = cutoff_function_1(sig_k,mj, mk, epsilon_h);
@@ -568,15 +569,18 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
                     //this was set last time 
                     //if(tmp>0.0 && abs(p)<abs(kmax)) 
                     
-                    if(tmp>=0.0) 
+                    if(tmp>0.0) 
                     {
                         p_config[0].push_back(px);
                         p_config[1].push_back(py);
                         p_config[2].push_back(pz);
-                        //std::cout << "cutoff = " << cutoff << std::endl;
-                        //std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
-                        //std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
-                        //std::cout << "p = " << p << " kmax = " << kmax << std::endl; 
+                        if(debug=='y')
+                        {
+                            std::cout << "cutoff = " << cutoff << std::endl;
+                            std::cout << "n = " << i << j << k << " nsq = " << nsq << " nmaxsq = " << nmaxsq << std::endl; 
+                            std::cout << "px = " << px << " py = " << py << " pz = " << pz << std::endl;
+                            std::cout << "p = " << p << " kmax = " << kmax << std::endl;
+                        } 
                  
                     }
                     else 
@@ -591,6 +595,11 @@ void config_maker_1(  std::vector< std::vector<comp> > &p_config,
     int psize0 = p_config[0].size();
     int psize1 = p_config[1].size();
     int psize2 = p_config[2].size();
+
+    if(debug=='y')
+    {
+        std::cout<<"size1 = "<<psize0<<'\t'<<"size2 = "<<psize1<<'\t'<<"size3 = "<<psize2<<std::endl; 
+    }
 
     if(psize0==0 || psize1==0 || psize2==0)
     {

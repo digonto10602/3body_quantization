@@ -399,12 +399,12 @@ void test_F3_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
 {
     int size = p_config[0].size();
 
-    int size1, size2;
+    int size1=0, size2=0;
     
     
-    Eigen::MatrixXcd K2_mat_1(size,size);
-    Eigen::MatrixXcd K2_mat_2(size,size);
-    Eigen::MatrixXcd K2_mat(2*size,2*size);
+    //Eigen::MatrixXcd K2_mat_1(size,size);
+    //Eigen::MatrixXcd K2_mat_2(size,size);
+    //Eigen::MatrixXcd K2_mat(2*size,2*size);
     
     
 
@@ -415,7 +415,10 @@ void test_F3_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
 
     std::vector< std::vector<comp> > p_config1(3,std::vector<comp> ());
     double config_tolerance = 1.0e-5;
+
     config_maker_1(p_config1, En, total_P, mi, mj, mk, L, epsilon_h, config_tolerance );
+    //std::cout<<"size1 in QC = "<<size1<<std::endl;
+    
     std::vector< std::vector<comp> > k_config1 = p_config1;
 
     size1 = p_config1[0].size(); 
