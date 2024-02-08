@@ -367,7 +367,7 @@ comp F2_i1( comp En,
             double epsilon_h,
             int max_shell_num    )
 {
-    char debug = 'y';
+    char debug = 'n';
     comp kx = k[0];
     comp ky = k[1];
     comp kz = k[2];
