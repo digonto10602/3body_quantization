@@ -1049,6 +1049,10 @@ void test_F2_vs_sigp()
     //atmpi = atmpi/atmK; 
     //atmK = 1.0;
     
+    double mi = atmK;
+    double mj = atmK;
+    double mk = atmpi; 
+
 
     double alpha = 0.5;
     double epsilon_h = 0.0;
@@ -1056,181 +1060,222 @@ void test_F2_vs_sigp()
 
     comp twopibyL = 2.0*pi/L; 
 
-    double En = atmpi + 2.0*atmK + 0.05;//2.9;//0.3184939100000000245;//0.26303; 
-
-
-
-    std::string test_file1 = "F2_vs_sigp_KKpi_2body_KK_P000_En_" + std::to_string(En) + ".dat"; //this is the test file for qsq, sigma_p, H(p) data 
-    comp Px = 0.0*twopibyL;
-    comp Py = 0.0*twopibyL;
-    comp Pz = 0.0*twopibyL;
-    std::vector<comp> total_P(3);
-    total_P[0] = Px; 
-    total_P[1] = Py; 
-    total_P[2] = Pz; 
-
-    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
-    comp total_P_val = spec_P; 
-
-    double mi = atmpi;//atmK;
-    double mj = atmK;
-    double mk = atmK;//atmpi; 
-
-    //double En_initial = 0.26302;
-    //double En_final = 0.31;
-    //double En_points = 10;
-
-    //double delE = abs(En_initial - En_final)/En_points; 
-
+    double Ecm = atmpi + 2.0*atmK + 0.075;//2.9;//0.3184939100000000245;//0.26303;
 
     
-    comp px = 0.0*twopibyL;
-    comp py = 0.0*twopibyL;
-    comp pz = 0.0*twopibyL;
+    int nPmax = 20;
+    std::vector<std::vector<int> > nP_config(3,std::vector<int>());
 
-    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
-    std::vector<comp> p(3);
-    p[0] = px; 
-    p[1] = py; 
-    p[2] = pz; 
-    std::vector<std::vector<comp> > p_config(3,std::vector<comp>());
-    p_config[0].push_back(px);
-    p_config[1].push_back(py);
-    p_config[2].push_back(pz);
-    
-    comp kx = 0.0*twopibyL;
-    comp ky = 0.0*twopibyL;
-    comp kz = 0.0*twopibyL;
-
-    comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz); 
-    std::vector<comp> k(3);
-    k[0] = kx; 
-    k[1] = ky; 
-    k[2] = kz; 
-    std::vector<std::vector<comp> > k_config(3,std::vector<comp>());
-    k_config[0].push_back(kx);
-    k_config[1].push_back(ky);
-    k_config[2].push_back(kz);
-    
-    comp Pminusk_x = Px - kx; 
-    comp Pminusk_y = Py - ky; 
-    comp Pminusk_z = Pz - kz; 
-    comp Pminusk = std::sqrt(Pminusk_x*Pminusk_x + Pminusk_y*Pminusk_y + Pminusk_z*Pminusk_z);
-
-    comp sig_k = (En - omega_func(spec_k,mi))*(En - omega_func(spec_k,mi)) - Pminusk*Pminusk; 
-    double chosen_scattering_length = scattering_length_2_KK;
-    comp K2_inv_val = K2_inv_00(eta_2, chosen_scattering_length, sig_k, mj, mk, epsilon_h);
-    comp K2_inv_val_temp = K2_inv_00_test_FRL(eta_2, chosen_scattering_length, spec_k, sig_k, mi, mj, mk, epsilon_h); 
-    
-    comp sigma_vecbased = sigma_pvec_based(En,p,mi,total_P);
-    comp qsq_vec_based = q2psq_star(sigma_vecbased,mj,mk);
-
-    std::cout<<std::setprecision(25);
-
-    int nmax = 20;
-    std::vector<std::vector<int> > n_config(3,std::vector<int>());
-
-    for(int i=-nmax;i<nmax+1;++i)
+    for(int i=0;i<nPmax+1;++i)
     {
-        for(int j=-nmax;j<nmax+1;++j)
+        for(int j=0;j<nPmax+1;++j)
         {
-            for(int k=-nmax;k<nmax+1;++k)
+            for(int k=0;k<nPmax+1;++k)
             {
                 int nsq = i*i + j*j + k*k;
-                if(nsq<=20)
+                if(nsq<=4)
                 {
-                    n_config[0].push_back(i);
-                    n_config[1].push_back(j);
-                    n_config[2].push_back(k);
+
+                    if(i>=j && j>=k)
+                    {
+                        std::cout<<"P config:"<<std::endl;
+                        std::cout<<i<<'\t'<<j<<'\t'<<k<<std::endl; 
+
+                        nP_config[0].push_back(i);
+                        nP_config[1].push_back(j);
+                        nP_config[2].push_back(k);
             
+                    }
                 }
             }
         }
-    }
+    } 
 
-    int config_size = n_config[0].size(); 
 
-    std::ofstream fout1;
-    fout1.open(test_file1.c_str());
-
-    /*for(int i=0;i<config_size;++i)
+    int P_config_size = nP_config[0].size();
+    for(int i=0;i<P_config_size;++i)
     {
-        int nx = n_config[0][i];
-        int ny = n_config[1][i];
-        int nz = n_config[2][i];
+        int nPx = nP_config[0][i];
+        int nPy = nP_config[1][i];
+        int nPz = nP_config[2][i]; 
 
-        int nsq = nx*nx + ny*ny + nz*nz; 
-        comp px1 = twopibyL*((comp)nx);
-        comp py1 = twopibyL*((comp)ny);
-        comp pz1 = twopibyL*((comp)nz);
+        std::string test_file1 =  "F2_vs_sigp_KKpi_2body_piK_P"
+                                + std::to_string((int)nPx) 
+                                + std::to_string((int)nPy)
+                                + std::to_string((int)nPz)
+                                + "_Ecm_" 
+                                + std::to_string(Ecm) 
+                                + ".dat"; //this is the test file for F2(p) data 
 
-        std::vector<comp> p1(3);
-        p1[0] = px1;
-        p1[1] = py1;
-        p1[2] = pz1; 
+        std::ofstream fout1;
+        fout1.open(test_file1.c_str());
 
-        comp spec_p = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
-        comp sig_p = sigma_pvec_based(En, p1, mi, total_P);
+        comp Px = ((comp) nPx)*twopibyL;
+        comp Py = ((comp) nPy)*twopibyL;
+        comp Pz = ((comp) nPz)*twopibyL;
+        std::vector<comp> total_P(3);
+        total_P[0] = Px; 
+        total_P[1] = Py; 
+        total_P[2] = Pz; 
 
-        comp F2 = F2_i1(En, p1, p1, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+        comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+        comp total_P_val = spec_P; 
 
-        fout1 << En <<'\t' << i << '\t' << nsq << '\t' << real(spec_p) << '\t' << imag(spec_p) << '\t'
-              << real(sig_p) << '\t' << imag(sig_p) << '\t' << real(F2) << '\t' << imag(F2) << std::endl; 
+        double En = std::sqrt(Ecm*Ecm + abs(spec_P*spec_P)); 
+        
+        //double En_initial = 0.26302;
+        //double En_final = 0.31;
+        //double En_points = 10;
 
-        std::cout << "i = " << i << '\t' 
+        //double delE = abs(En_initial - En_final)/En_points; 
+
+
+        /*
+        comp px = 0.0*twopibyL;
+        comp py = 0.0*twopibyL;
+        comp pz = 0.0*twopibyL;
+
+        comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+        std::vector<comp> p(3);
+        p[0] = px; 
+        p[1] = py; 
+        p[2] = pz; 
+        std::vector<std::vector<comp> > p_config(3,std::vector<comp>());
+        p_config[0].push_back(px);
+        p_config[1].push_back(py);
+        p_config[2].push_back(pz);
+    
+        comp kx = 0.0*twopibyL;
+        comp ky = 0.0*twopibyL;
+        comp kz = 0.0*twopibyL;
+
+        comp spec_k = std::sqrt(kx*kx + ky*ky + kz*kz); 
+        std::vector<comp> k(3);
+        k[0] = kx; 
+        k[1] = ky; 
+        k[2] = kz; 
+        std::vector<std::vector<comp> > k_config(3,std::vector<comp>());
+        k_config[0].push_back(kx);
+        k_config[1].push_back(ky);
+        k_config[2].push_back(kz);
+    
+        comp Pminusk_x = Px - kx; 
+        comp Pminusk_y = Py - ky; 
+        comp Pminusk_z = Pz - kz; 
+        comp Pminusk = std::sqrt(Pminusk_x*Pminusk_x + Pminusk_y*Pminusk_y + Pminusk_z*Pminusk_z);
+
+        std::cout<<std::setprecision(25);
+        */
+
+
+        /*
+        int nmax = 20;
+        std::vector<std::vector<int> > n_config(3,std::vector<int>());
+
+        for(int i=-nmax;i<nmax+1;++i)
+        {
+            for(int j=-nmax;j<nmax+1;++j)
+            {
+                for(int k=-nmax;k<nmax+1;++k)
+                {
+                    int nsq = i*i + j*j + k*k;
+                    if(nsq<=20)
+                    {
+                        n_config[0].push_back(i);
+                        n_config[1].push_back(j);
+                        n_config[2].push_back(k);
+            
+                    }
+                }
+            }
+        }
+
+        int config_size = n_config[0].size(); 
+
+        */
+
+        /*for(int i=0;i<config_size;++i)
+        {
+            int nx = n_config[0][i];
+            int ny = n_config[1][i];
+            int nz = n_config[2][i];
+
+            int nsq = nx*nx + ny*ny + nz*nz; 
+            comp px1 = twopibyL*((comp)nx);
+            comp py1 = twopibyL*((comp)ny);
+            comp pz1 = twopibyL*((comp)nz);
+
+            std::vector<comp> p1(3);
+            p1[0] = px1;
+            p1[1] = py1;
+            p1[2] = pz1; 
+
+            comp spec_p = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
+            comp sig_p = sigma_pvec_based(En, p1, mi, total_P);
+
+            comp F2 = F2_i1(En, p1, p1, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+
+            fout1 << En <<'\t' << i << '\t' << nsq << '\t' << real(spec_p) << '\t' << imag(spec_p) << '\t'
+                  << real(sig_p) << '\t' << imag(sig_p) << '\t' << real(F2) << '\t' << imag(F2) << std::endl; 
+
+            std::cout << "i = " << i << '\t' 
                   << "nsq = " << nsq << '\t' 
                   << "spec_p = " << spec_p << '\t'
                   << "sig_p = " << sig_p << '\t' 
                   << "F2 = " << F2 << std::endl; 
 
-    }*/
+        }*/
 
-    double sigp_min = 0.0;
-    double sigp_max = 6.0;
-    double sigp_points = 100;
-    double del_sigp = abs(sigp_max - sigp_min)/sigp_points; 
+        double sigp_min = 0.0;
+        double sigp_max = 6.0;
+        double sigp_points = 100;
+        double del_sigp = abs(sigp_max - sigp_min)/sigp_points; 
 
-    double p_min = 0.0;
-    double p_max = 2.5;
-    double p_points = 1000;
-    double del_p = abs(p_min - p_max)/p_points; 
+        double p_min = 0.0;
+        double p_max = 0.5;
+        double p_points = 1000;
+        double del_p = abs(p_min - p_max)/p_points; 
 
-    for(int i=0;i<p_points+1;++i)
-    {
-        double p_val = p_min + i*del_p; 
+        for(int i=0;i<p_points+1;++i)
+        {
+            double p_val = p_min + i*del_p; 
 
-        int nx = p_val*L/(2.0*pi);//n_config[0][i];
-        int ny = 0;//n_config[1][i];
-        int nz = 0;//n_config[2][i];
+            int nx = p_val*L/(2.0*pi);//n_config[0][i];
+            int ny = 0;//n_config[1][i];
+            int nz = 0;//n_config[2][i];
 
-        int nsq = nx*nx + ny*ny + nz*nz; 
-        comp px1 = p_val;//twopibyL*((comp)nx);
-        comp py1 = 0.0;//twopibyL*((comp)ny);
-        comp pz1 = 0.0;//twopibyL*((comp)nz);
+            int nsq = nx*nx + ny*ny + nz*nz; 
+            comp px1 = p_val;//twopibyL*((comp)nx);
+            comp py1 = 0.0;//twopibyL*((comp)ny);
+            comp pz1 = 0.0;//twopibyL*((comp)nz);
 
-        std::vector<comp> p1(3);
-        p1[0] = px1;
-        p1[1] = py1;
-        p1[2] = pz1; 
+            std::vector<comp> p1(3);
+            p1[0] = px1;
+            p1[1] = py1;
+            p1[2] = pz1; 
 
-        comp spec_p = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
-        comp sig_p = sigma_pvec_based(En, p1, mi, total_P);
+            comp spec_p = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
+            comp sig_p = sigma_pvec_based(En, p1, mi, total_P);
 
-        comp F2 = F2_i1(En, p1, p1, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
-        double twobody_threshold = mj + mk ;
-        fout1 << En <<'\t' << i << '\t' << nsq << '\t' 
-              << abs(mj*mj - mk*mk) << '\t' << twobody_threshold << '\t'
-              << real(spec_p) << '\t' << imag(spec_p) << '\t'
-              << real(sig_p) << '\t' << imag(sig_p) << '\t' << real(F2) << '\t' << imag(F2) << std::endl; 
+            comp F2 = F2_i1(En, p1, p1, total_P, L, mi, mj, mk, alpha, epsilon_h, max_shell_num);
+            double twobody_threshold = mj + mk ;
+            fout1 << En <<'\t' << Ecm << '\t' << i << '\t' << nsq << '\t' 
+                  << abs(mj*mj - mk*mk) << '\t' << twobody_threshold << '\t'
+                  << real(spec_p) << '\t' << imag(spec_p) << '\t'
+                  << real(sig_p) << '\t' << imag(sig_p) << '\t' << real(F2) << '\t' << imag(F2) << std::endl; 
 
-        std::cout << "i = " << i << '\t' 
-                  << "nsq = " << nsq << '\t' 
-                  << "spec_p = " << spec_p << '\t'
-                  << "sig_p = " << sig_p << '\t' 
-                  << "F2 = " << F2 << std::endl; 
+            std::cout << "i = " << i << '\t' 
+                      << "En = " << En << '\t'
+                      << "Ecm = " << Ecm << '\t'
+                      << "P = " << spec_P << '\t'
+                      << "nsq = " << nsq << '\t' 
+                      << "spec_p = " << spec_p << '\t'
+                      << "sig_p = " << sig_p << '\t' 
+                      << "F2 = " << F2 << std::endl; 
 
+        }
+        fout1.close();
     }
-    fout1.close();
 }
 
 
