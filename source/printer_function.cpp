@@ -1565,9 +1565,10 @@ void test_F2_sum_func()
 }
 
 /* Here we test the modified denominator of the F3 function, we write 
-the denominator as 1 + (K2inv + G)Finv to check for additional poles 
-coming in F3 */
-void test_additionalpoles1_in_F3_vs_En_KKpi()
+the denominator as 1 + (K2inv + G)Finv or 1 + K2(F2+G) or (K2inv + F2 + G)^-1
+to check for additional poles coming in F3 */
+
+void test_additionalpoles_in_F3_vs_En_KKpi()
 {
 
     /*  Inputs  */
@@ -1638,7 +1639,7 @@ void test_additionalpoles1_in_F3_vs_En_KKpi()
         int nPy = nP_config[1][i];
         int nPz = nP_config[2][i];
     
-        std::string filename =    "additional_poles1_F3_KKpi_L20_nP_"
+        std::string filename =   "additional_poles3_F3_KKpi_L20_nP_" //"F2_check_poles_L20_nP"
                                 + std::to_string((int)nPx)
                                 + std::to_string((int)nPy)
                                 + std::to_string((int)nPz)
@@ -1691,7 +1692,10 @@ void test_additionalpoles1_in_F3_vs_En_KKpi()
             Eigen::MatrixXcd G_mat; 
 
 
-            testF3_additionalpoles_1(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            //testF3_additionalpoles_1(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            //testF3_additionalpoles_2(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            testF3_additionalpoles_3(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            
             //std::cout<<"ran until here"<<std::endl;
     
             //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
@@ -1703,8 +1707,11 @@ void test_additionalpoles1_in_F3_vs_En_KKpi()
                     << real(Ecm_calculated) << '\t'
                     << imag(Ecm_calculated) << '\t'
                     << real(F2_mat.determinant()) << '\t'
+                    << real(F2_mat.sum()) << '\t'
                     << real(G_mat.determinant()) << '\t'
+                    << real(G_mat.sum()) << '\t'
                     << real(K2i_mat.determinant()) << '\t'
+                    << real(K2i_mat.sum()) << '\t'
                     //this is for F3 determinant
                     << real(F3_mat.determinant()) << '\t'
                     //this is for F3inv determinant
@@ -1765,6 +1772,6 @@ int main()
     //test_F2_vs_sigp();
     //test_F2_sum_func();
 
-    test_additionalpoles1_in_F3_vs_En_KKpi();
+    test_additionalpoles_in_F3_vs_En_KKpi();
     return 0;
 }
