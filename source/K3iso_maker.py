@@ -14,6 +14,9 @@ import subprocess
 def E_to_Ecm(En, P):
     return np.sqrt(En**2 - P**2)
 
+def Esq_to_Ecmsq(En, P):
+    return En**2 - P**2
+
 def P000():
     drive = "/home/digonto/Codes/Practical_Lattice_v2/KKpi_interacting_spectrum/Lattice_data/KKpi_L20/"
     filename1 = drive + "mass_000_A1m_t011_MassJackFiles_mass_t0_11_reorder_state0.jack"
@@ -201,10 +204,12 @@ def P111():
 
 
         for i in range(len(energylab)):
-            Ecm = E_to_Ecm(energylab[i],P)
-            if(Ecm<0.26 or Ecm>0.43):
+            Ecmsq = Esq_to_Ecmsq(energylab[i],P)
+            
+            if(Ecmsq<0.26**2 or Ecmsq>0.43**2):
                 continue 
             else:
+                Ecm = np.sqrt(Ecmsq)
                 K3iso = subprocess.check_output(['./generate_K3iso',str(nPx),str(nPy),str(nPz),str(energylab[i])],shell=False)
             result = K3iso.decode('utf-8')
             finresult = float(result)
@@ -257,10 +262,16 @@ def P200():
         
 
         for i in range(len(energylab)):
-            K3iso = subprocess.check_output(['./generate_K3iso',str(nPx),str(nPy),str(nPz),str(energylab[i])],shell=False)
+            Ecmsq = Esq_to_Ecmsq(energylab[i],P)
+            
+            if(Ecmsq<0.26**2 or Ecmsq>0.43**2):
+                continue 
+            else:
+                Ecm = np.sqrt(Ecmsq)
+                K3iso = subprocess.check_output(['./generate_K3iso',str(nPx),str(nPy),str(nPz),str(energylab[i])],shell=False)
             result = K3iso.decode('utf-8')
             finresult = float(result)
-            Ecm = E_to_Ecm(energylab[i],P)
+            #Ecm = E_to_Ecm(energylab[i],P)
             print(nPx,nPy,nPz,statecounter, energylab[i],E_to_Ecm(energylab[i],P),float(result))
             output = str(energylab[i]) + '\t' + str(Ecm) + '\t' + str(finresult) + '\n' 
             #output = output.rstrip('\n')
