@@ -17,6 +17,9 @@ def E_to_Ecm(En, P):
 def Esq_to_Ecmsq(En, P):
     return En**2 - P**2
 
+def Ecmsq_to_Esq(Ecm, P):
+    return Ecm**2 + P**2
+
 def P000():
     drive = "/home/digonto/Codes/Practical_Lattice_v2/KKpi_interacting_spectrum/Lattice_data/KKpi_L20/"
     filename1 = drive + "mass_000_A1m_t011_MassJackFiles_mass_t0_11_reorder_state0.jack"
@@ -280,14 +283,148 @@ def P200():
         fout.close()
         statecounter = statecounter + 1
 
+#this one calculates the K3iso using the averaged data file
+def jackknifeavg_lattice_data():
+    #this drive path has been set from macbook
+    drive = "/Users/digonto/GitHub/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    filename1 = drive + "KKpi_spectrum.000_A1m"
+    filename2 = drive + "KKpi_spectrum.100_A2"
+    filename3 = drive + "KKpi_spectrum.110_A2"
+    filename4 = drive + "KKpi_spectrum.111_A2"
+    filename5 = drive + "KKpi_spectrum.200_A2"
+
+    filelist = [filename1, filename2, filename3, filename4, filename5]
+
+    
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    
+
+
+    nconfig = [[0,0,0],[0,0,1],[0,1,1],[1,1,1],[0,0,2]]
+
+    
+    statecounter=0
+    counter = 0
+    
+    for files in filelist:
+        Ls, Ecm, err1, err2 = np.genfromtxt(files,unpack=True)
+
+        nPx = nconfig[counter][0]
+        nPy = nconfig[counter][1]
+        nPz = nconfig[counter][2]
+
+        Px = nPx*twopibyxiL
+        Py = nPy*twopibyxiL
+        Pz = nPz*twopibyxiL
+
+        P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+
+        
+
+        for i in range(len(Ecm)):
+            Ecm_val_ini = Ecm[i] - err2[i]
+            Ecm_val_fin = Ecm[i] + err2[i]
+            Elab_ini = np.sqrt(Ecmsq_to_Esq(Ecm_val_ini,P))
+            Elab_fin = np.sqrt(Ecmsq_to_Esq(Ecm_val_fin,P))
+            Elab = np.linspace(Elab_ini, Elab_fin, 50)
+
+            outputfile = "K3iso_jackavg_P" + str(nPx) + str(nPy) + str(nPz) + "_state_" + str(i) + ".dat"
+
+            fout = open(outputfile,"w")
+
+            for j in range(len(Elab)):
+                Elab_val = Elab[j]
+                K3iso = subprocess.check_output(['./generate_K3iso',str(nPx),str(nPy),str(nPz),str(Elab_val)],shell=False)
+                result = K3iso.decode('utf-8')
+                finresult = float(result)
+                calcEcmsq = Esq_to_Ecmsq(Elab_val,P)
+                calcEcm = np.sqrt(calcEcmsq)
+                print(nPx,nPy,nPz,i, Elab_val,calcEcm,float(result))
+                output = str(Elab_val) + '\t' + str(calcEcm) + '\t' + str(finresult) + '\n' 
+                #output = output.rstrip('\n')
+                fout.write(output)
+    
+            fout.close()
+        statecounter = statecounter + 1
+        counter = counter + 1 
+
+def jackknifeavg_centralvalue_lattice_data():
+    #this drive path has been set from macbook
+    drive = "/Users/digonto/GitHub/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    filename1 = drive + "KKpi_spectrum.000_A1m"
+    filename2 = drive + "KKpi_spectrum.100_A2"
+    filename3 = drive + "KKpi_spectrum.110_A2"
+    filename4 = drive + "KKpi_spectrum.111_A2"
+    filename5 = drive + "KKpi_spectrum.200_A2"
+
+    filelist = [filename1, filename2, filename3, filename4, filename5]
+
+    
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    
+
+
+    nconfig = [[0,0,0],[0,0,1],[0,1,1],[1,1,1],[0,0,2]]
+
+    
+    statecounter=0
+    counter = 0
+    
+    for files in filelist:
+        Ls, Ecm, err1, err2 = np.genfromtxt(files,unpack=True)
+
+        nPx = nconfig[counter][0]
+        nPy = nconfig[counter][1]
+        nPz = nconfig[counter][2]
+
+        Px = nPx*twopibyxiL
+        Py = nPy*twopibyxiL
+        Pz = nPz*twopibyxiL
+
+        P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+        outputfile = "K3iso_jackavg_centralval_P" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+
+        fout = open(outputfile,"w")
+
+        
+
+        for i in range(len(Ecm)):
+            
+            Ecm_val = Ecm[i]
+            Elab_val = np.sqrt(Ecmsq_to_Esq(Ecm_val,P))
+            K3iso = subprocess.check_output(['./generate_K3iso',str(nPx),str(nPy),str(nPz),str(Elab_val)],shell=False)
+            result = K3iso.decode('utf-8')
+            finresult = float(result)
+            calcEcmsq = Esq_to_Ecmsq(Elab_val,P)
+            calcEcm = np.sqrt(calcEcmsq)
+            print(nPx,nPy,nPz,i, Elab_val,calcEcm,float(result))
+            output = str(Elab_val) + '\t' + str(calcEcm) + '\t' + str(finresult) + '\n' 
+            #output = output.rstrip('\n')
+            fout.write(output)                  
+            
+            
+    
+        fout.close()
+        statecounter = statecounter + 1
+        counter = counter + 1 
+
 
 #P000()
 #P100()
 #P110()
-P111()
-P200()
+#P111()
+#P200()
 
-
+#jackknifeavg_lattice_data()
+jackknifeavg_centralvalue_lattice_data()
 
 
 
