@@ -1,0 +1,37 @@
+
+
+*******************************************************************************
+Thu Nov  9 09:55:50 2023
+
+
+FIT:    data read from "scattering_parameter_comparison_with_pion_mass" u 1:2
+        format = x:z
+        x range restricted to [139.570 : *]
+        #datapoints = 3
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x)=m*x+c
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   m             c            
+   0 3.1100178216e+05   0.00e+00  2.27e+02    1.000000e+00   1.000000e+00
+   7 4.3128078509e-03  -1.73e-09  2.27e-05   -9.361365e-05  -3.198512e-01
+
+After 7 iterations the fit converged.
+final sum of squares of residuals : 0.00431281
+rel. change during last iteration : -1.72957e-14
+
+degrees of freedom    (FIT_NDF)                        : 1
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 0.065672
+variance of residuals (reduced chisquare) = WSSR/ndf   : 0.00431281
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+m               = -9.36136e-05     +/- 0.0004696    (501.6%)
+c               = -0.319851        +/- 0.1506       (47.08%)
+
+correlation matrix of the fit parameters:
+                m      c      
+m               1.000 
+c              -0.968  1.000 
