@@ -943,8 +943,8 @@ void test_detF3inv_vs_En_KKpi()
     double xi = 3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -4.04;
-    double scattering_length_2_KK = -4.07;
+    double scattering_length_1_piK = 4.04;
+    double scattering_length_2_KK = 4.07;
     double eta_1 = 1.0;
     double eta_2 = 0.5; 
     double atmpi = 0.06906;
@@ -1029,7 +1029,7 @@ void test_detF3inv_vs_En_KKpi()
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
         double KKKK_threshold = 4.0*atmK; 
 
-        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.00001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
         double En_points = 4000;
 
@@ -1762,7 +1762,7 @@ int main()
     //test_detF3inv_vs_En();
 
     //This function is for F3 and F3inv both:
-    //test_detF3inv_vs_En_KKpi();
+    test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
