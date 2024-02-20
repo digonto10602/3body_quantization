@@ -1,5 +1,6 @@
 #ifndef POLESEARCHING_H
 #define POLESEARCHING_H
+#include "functions.h"
 #include "F2_functions.h"
 #include "K2_functions.h"
 #include "G_functions.h"

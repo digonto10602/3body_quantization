@@ -1,5 +1,6 @@
 #ifndef GFUNCTIONS_H
 #define GFUNCTIONS_H
+#include "functions.h"
 #include "F2_functions.h"
 #include "K2_functions.h"
 #include<Eigen/Dense>

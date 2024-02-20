@@ -1,6 +1,7 @@
 #ifndef K2FUNCTIONS_H
 #define K2FUNCTIONS_H
 
+#include "functions.h"
 #include "F2_functions.h"
 #include<Eigen/Dense>
 

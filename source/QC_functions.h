@@ -1,8 +1,10 @@
 #ifndef QCFUNCTIONS_H
 #define QCFUNCTIONS_H
+#include "functions.h"
 #include "F2_functions.h"
 #include "K2_functions.h"
 #include "G_functions.h"
+
 
 typedef std::complex<double> comp;
 
@@ -1539,6 +1541,111 @@ comp function_F3_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
     return real(F3matinv.sum()); 
 }
 
+
+/* Test F3 for 3 ID system, we K2inv to zero and 
+then change it gradually to see how the spectrum shifts */
+void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
+                            Eigen::MatrixXcd &F2mat,
+                            Eigen::MatrixXcd &K2imat,
+                            Eigen::MatrixXcd &Gmat, 
+                            comp En, 
+                            std::vector<comp> total_P, 
+                            double eta_i_1,
+                            double eta_i_2, 
+                            double scattering_length_1,
+                            double scattering_length_2,  
+                            double m_pi,
+                            double m_K,  
+                            double alpha, 
+                            double epsilon_h, 
+                            double L, 
+                            double xi, 
+                            int max_shell_num   )
+{
+    int size1=0, size2=0;
+    
+    
+    //Eigen::MatrixXcd K2_mat_1(size,size);
+    //Eigen::MatrixXcd K2_mat_2(size,size);
+    //Eigen::MatrixXcd K2_mat(2*size,2*size);
+    
+    
+
+    //for i = 1 
+    double mi = m_K; 
+    double mj = m_K; 
+    double mk = m_pi; //here m_pi = m_K
+
+    std::vector< std::vector<comp> > p_config1(3,std::vector<comp> ());
+    double config_tolerance = 1.0e-5;
+
+    config_maker_1(p_config1, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+    //std::cout<<"size1 in QC = "<<size1<<std::endl;
+    
+    std::vector< std::vector<comp> > k_config1 = p_config1;
+
+    size1 = p_config1[0].size(); 
+    Eigen::MatrixXcd F2_mat_1(size1,size1);
+    Eigen::MatrixXcd K2inv_mat_1(size1,size1);
+    //F2_i_mat( F2_mat_1, En, p_config1, k_config1, total_P, mi, mj, mk, L, alpha, epsilon_h, max_shell_num );
+    F2_i_mat_1( F2_mat_1, En, p_config1, k_config1, total_P, mi, mj, mk, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    K2inv_i_mat( K2inv_mat_1, eta_i_1, scattering_length_1, En, p_config1, k_config1, total_P, mi, mj, mk, epsilon_h, L );
+    //K2_mat_1 = K2inv_mat_1.inverse();
+    
+    
+    char debug1 = 'n';
+    if(debug1=='y')
+    {
+        std::cout << "spec 1 size = " << std::endl;
+        std::cout << p_config1[0].size()<< std::endl; 
+        std::cout << "========================" << std::endl;
+        std::cout << "F2 mat 1 = " << std::endl; 
+        std::cout << F2_mat_1 << std::endl; 
+        std::cout << "========================" << std::endl; 
+    }
+    //for (i,j) = 1 1 and k = 2 
+    mi = m_K; 
+    mj = m_K; 
+    mk = m_pi; 
+    Eigen::MatrixXcd G_mat_11(size1,size1);
+    G_ij_mat( G_mat_11, En, p_config1, k_config1, total_P, mi, mj, mk, L, epsilon_h ); 
+
+
+    Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
+    temp_identity_mat.setIdentity();
+
+    Eigen::MatrixXcd H_mat = F2_mat_1 + G_mat_11;//K2inv_mat_1 + F2_mat_1 + G_mat_11;
+
+    F3mat = Eigen::MatrixXcd(size1, size1); 
+    F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 
+
+    F2mat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    K2imat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    Gmat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+
+    Gmat = G_mat_11; 
+    F2mat = F2_mat_1; 
+    K2imat = K2inv_mat_1; 
+    
+
+    char debug = 'n';
+    if(debug=='y')
+    {
+        std::cout << "F2 mat = " << std::endl;
+        std::cout << F2_mat_1<< std::endl; 
+        std::cout << "========================" << std::endl;
+        std::cout << "G mat = " << std::endl; 
+        std::cout << G_mat_11 << std::endl;
+        std::cout << "========================" << std::endl; 
+        std::cout << "K2inv mat = " << std::endl; 
+        std::cout << K2inv_mat_1 << std::endl; 
+        std::cout << "========================" << std::endl; 
+        std::cout << "F3 mat = " << std::endl; 
+        std::cout << F3mat << std::endl; 
+        std::cout << "========================" << std::endl;
+    }
+}
 
 
 

@@ -5,7 +5,7 @@
 */
 
 
-
+#include "functions.h"
 #include "F2_functions.h"
 #include "K2_functions.h"
 #include "G_functions.h"
@@ -1735,6 +1735,173 @@ void test_additionalpoles_in_F3_vs_En_KKpi()
 }
 
 
+/* Here we test the F3 functions for identical 3 particles with K2inv set to 
+zero, we then dial K2inv on and see the gradual change of the spectrum, all the 
+change will be done in QC function = test_F3_ID_zeroK2 */
+void test_F3_ID_zeroK2_printer()
+{
+
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 1.0;//0.5; 
+    double atmpi = 1.0;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    /*---------------------P config----------------------*/
+    int nPmax = 20;
+    std::vector<std::vector<int> > nP_config(3,std::vector<int>());
+
+    for(int i=0;i<nPmax+1;++i)
+    {
+        for(int j=0;j<nPmax+1;++j)
+        {
+            for(int k=0;k<nPmax+1;++k)
+            {
+                int nsq = i*i + j*j + k*k;
+                if(nsq<=4)
+                {
+
+                    if(i>=j && j>=k)
+                    {
+                        std::cout<<"P config:"<<std::endl;
+                        std::cout<<i<<'\t'<<j<<'\t'<<k<<std::endl; 
+
+                        nP_config[0].push_back(i);
+                        nP_config[1].push_back(j);
+                        nP_config[2].push_back(k);
+            
+                    }
+                }
+            }
+        }
+    } 
+
+
+    int P_config_size = nP_config[0].size();
+
+    /*-----------------------------------------------------*/
+
+    for(int i=0;i<P_config_size;++i)
+    {
+        int nPx = nP_config[0][i];
+        int nPy = nP_config[1][i];
+        int nPz = nP_config[2][i];
+    
+        std::string filename =   "F3_ma=inf_KKpi_L20_nP_" //"F2_check_poles_L20_nP"
+                                + std::to_string((int)nPx)
+                                + std::to_string((int)nPy)
+                                + std::to_string((int)nPz)
+                                + ".dat";
+
+        //std::string filename = "temp";
+        comp Px = ((comp)nPx)*twopibyxiLbyas;//twopibyL;
+        comp Py = ((comp)nPy)*twopibyxiLbyas;//twopibyL;
+        comp Pz = ((comp)nPz)*twopibyxiLbyas;//twopibyL;
+        std::vector<comp> total_P(3);
+        total_P[0] = Px; 
+        total_P[1] = Py; 
+        total_P[2] = Pz; 
+        comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+
+        double mi = atmK;
+        double mj = atmK;
+        double mk = atmpi; 
+        //for nP 100 the first run starts 0.4184939100000000245
+        double KKpi_threshold = atmK + atmK + atmpi; 
+        double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
+        double KKKK_threshold = 4.0*atmK; 
+
+        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+        double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
+        double En_points = 4000;
+
+        double delE = abs(En_initial - En_final)/En_points;
+
+        std::ofstream fout; 
+        fout.open(filename.c_str());
+
+        for(int i=1; i<En_points; ++i)
+        {
+            double En = En_initial + i*delE; 
+
+            Eigen::MatrixXcd F3_mat;//(Eigen::Dynamic,Eigen::Dynamic);
+            Eigen::MatrixXcd F2_mat;
+            Eigen::MatrixXcd K2i_mat; 
+            Eigen::MatrixXcd G_mat; 
+
+
+            test_F3_ID_zeroK2(  F3_mat, F2_mat, K2i_mat, G_mat, En, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            
+            comp Ecm_calculated = E_to_Ecm(En, total_P);
+            fout    << std::setprecision(20) 
+                    << En << '\t' 
+                    << real(Ecm_calculated) << '\t'
+                    << imag(Ecm_calculated) << '\t'
+                    << real(F2_mat.determinant()) << '\t'
+                    << real(F2_mat.sum()) << '\t'
+                    << real(G_mat.determinant()) << '\t'
+                    << real(G_mat.sum()) << '\t'
+                    << real(K2i_mat.determinant()) << '\t'
+                    << real(K2i_mat.sum()) << '\t'
+                    //this is for F3 determinant
+                    << real(F3_mat.determinant()) << '\t'
+                    //this is for F3inv determinant
+                    //<< real(F3_mat_inv.determinant()) << '\t'
+                    //this is for K3iso
+                    //<< -real(F3_mat_inv.sum()) << std::endl;
+                    //for F3iso 
+                    << real(F3_mat.sum()) << std::endl;
+            std::cout<<std::setprecision(20);
+            std::cout<< "En = " << En << '\t'
+                     << "P = " << nPx << nPy << nPz << '\t' 
+                     << "Ecm = " << Ecm_calculated << '\t' 
+                     << "detF3 = " << F3_mat.determinant() << '\t'
+                     << "F3iso = " << F3_mat.sum() << '\t'
+                     //<< "det of F3inv = "<< real(F3_mat_inv.determinant()) << '\t' 
+                     //<< "K3df_iso = "<< -real(F3_mat_inv.sum()) << std::endl;
+                     << std::endl; 
+        }
+        fout.close();
+    }               
+}
+
+void threebody_non_int_spectrum(    std::string filename, 
+                                    double m1, 
+                                    double m2, 
+                                    double m3, 
+                                    vector<comp> total_P,
+                                    double xi, 
+                                    double L,
+                                    int nmax, 
+                                    int nsq_max )
+{
+    
+}
+
+
 
 int main()
 {
@@ -1762,7 +1929,7 @@ int main()
     //test_detF3inv_vs_En();
 
     //This function is for F3 and F3inv both:
-    test_detF3inv_vs_En_KKpi();
+    //test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
@@ -1772,6 +1939,9 @@ int main()
     //test_F2_vs_sigp();
     //test_F2_sum_func();
 
-    test_additionalpoles_in_F3_vs_En_KKpi();
+    //test_additionalpoles_in_F3_vs_En_KKpi();
+
+    //check the K2inv dependence of F3 for 3-ID
+    test_F3_ID_zeroK2_printer();
     return 0;
 }
