@@ -1615,7 +1615,7 @@ void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
     Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
     temp_identity_mat.setIdentity();
 
-    Eigen::MatrixXcd H_mat = F2_mat_1 + G_mat_11;//K2inv_mat_1 + F2_mat_1 + G_mat_11;
+    Eigen::MatrixXcd H_mat =  F2_mat_1 + G_mat_11;//K2inv_mat_1 + F2_mat_1 + G_mat_11;
 
     F3mat = Eigen::MatrixXcd(size1, size1); 
     F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 

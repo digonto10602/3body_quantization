@@ -51,14 +51,19 @@ comp G_ij(  comp En,
     comp mom_P_p_k = std::sqrt(mom_P_p_k_x*mom_P_p_k_x + mom_P_p_k_y*mom_P_p_k_y + mom_P_p_k_z*mom_P_p_k_z);
 
 
-    comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj))
-                -mom_P_p_k*mom_P_p_k - mk*mk; 
+    //comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj))
+    //            -mom_P_p_k*mom_P_p_k - mk*mk; 
+
+    comp tol = {0.0,1.0e-10};
+    //comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj) - omega_func(mom_P_p_k,mk))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj) + omega_func(mom_P_p_k,mk) + tol);
+    comp denom = 2.0*omega_func(mom_P_p_k,mk)*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj) - omega_func(mom_P_p_k,mk));
 
     comp onebydenom = 1.0/denom; 
 
     //std::cout<<"sigi="<<sig_i<<'\t'<<"sigj="<<sig_j<<'\t'<<"cutoff1="<<cutoff1<<'\t'<<"cutoff2="<<cutoff2<<"denom="<<denom<<std::endl;
 
     return oneby2omegapLcube*cutoff1*cutoff2*onebydenom*oneby2omegakLcube;
+    //return oneby2omegapLcube;
 
 }
 

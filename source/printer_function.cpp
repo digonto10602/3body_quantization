@@ -1748,8 +1748,8 @@ void test_F3_ID_zeroK2_printer()
     double xi = 1;//3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -4.04;
-    double scattering_length_2_KK = -4.07;
+    double scattering_length_1_piK = -1000000000;//-4.04;
+    double scattering_length_2_KK =  -1000000000;//-4.07;
     double eta_1 = 1.0;
     double eta_2 = 1.0;//0.5; 
     double atmpi = 1.0;//0.06906;
@@ -1762,6 +1762,8 @@ void test_F3_ID_zeroK2_printer()
     double alpha = 0.5;
     double epsilon_h = 0.0;
     int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
 
     double pi = std::acos(-1.0); 
     comp twopibyL = 2.0*pi/L;
@@ -1815,6 +1817,17 @@ void test_F3_ID_zeroK2_printer()
                                 + std::to_string((int)nPz)
                                 + ".dat";
 
+        std::string nonint_file = "non_int_3body_nP"
+                                + std::to_string((int)nPx)
+                                + std::to_string((int)nPy)
+                                + std::to_string((int)nPz)
+                                + ".dat";
+
+        std::string gpole_file = "Gpole_3body_nP"
+                                + std::to_string((int)nPx)
+                                + std::to_string((int)nPy)
+                                + std::to_string((int)nPz)
+                                + ".dat";
         //std::string filename = "temp";
         comp Px = ((comp)nPx)*twopibyxiLbyas;//twopibyL;
         comp Py = ((comp)nPy)*twopibyxiLbyas;//twopibyL;
@@ -1836,9 +1849,12 @@ void test_F3_ID_zeroK2_printer()
 
         double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
-        double En_points = 4000;
+        double En_points = 500;
 
         double delE = abs(En_initial - En_final)/En_points;
+
+        threebody_non_int_spectrum(nonint_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
+        threebody_Gpoles(gpole_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
 
         std::ofstream fout; 
         fout.open(filename.c_str());
@@ -1855,6 +1871,7 @@ void test_F3_ID_zeroK2_printer()
 
             test_F3_ID_zeroK2(  F3_mat, F2_mat, K2i_mat, G_mat, En, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             
+            Eigen::MatrixXcd FplusG = F2_mat + G_mat; 
             comp Ecm_calculated = E_to_Ecm(En, total_P);
             fout    << std::setprecision(20) 
                     << En << '\t' 
@@ -1864,7 +1881,7 @@ void test_F3_ID_zeroK2_printer()
                     << real(F2_mat.sum()) << '\t'
                     << real(G_mat.determinant()) << '\t'
                     << real(G_mat.sum()) << '\t'
-                    << real(K2i_mat.determinant()) << '\t'
+                    << real(FplusG.sum()) << '\t'
                     << real(K2i_mat.sum()) << '\t'
                     //this is for F3 determinant
                     << real(F3_mat.determinant()) << '\t'
@@ -1888,19 +1905,256 @@ void test_F3_ID_zeroK2_printer()
     }               
 }
 
-void threebody_non_int_spectrum(    std::string filename, 
-                                    double m1, 
-                                    double m2, 
-                                    double m3, 
-                                    vector<comp> total_P,
-                                    double xi, 
-                                    double L,
-                                    int nmax, 
-                                    int nsq_max )
+void test_3body_non_int()
 {
+    /*  Inputs  */
     
+    double L = 20;
+    double Lbyas = L;
+    double xi = 3.449;//3.444; /* found from lattice */
+    int nmax = 20; 
+    int nsq_max = 4;
+    
+
+    double scattering_length_1_piK = -4.04;
+    double scattering_length_2_KK = -4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double atmpi = 0.06906;
+    double atmK = 0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    double m1 = atmK; 
+    double m2 = atmK; 
+    double m3 = atmpi; 
+
+    std::string filename = "3body_non_int_test.dat";
+
+    int nPx = 1;
+    int nPy = 1; 
+    int nPz = 0; 
+    std::vector<comp> total_P(3); 
+    total_P[0] = ((comp)nPx)*twopibyxiLbyas; 
+    total_P[1] = ((comp)nPy)*twopibyxiLbyas; 
+    total_P[2] = ((comp)nPz)*twopibyxiLbyas; 
+    threebody_non_int_spectrum(filename, m1, m2, m3, total_P, xi, Lbyas, nmax, nsq_max);
 }
 
+void poles_of_G_in_Ecm()
+{
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -1000000000;//-4.04;
+    double scattering_length_2_KK =  -1000000000;//-4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 1.0;//0.5; 
+    double atmpi = 1.0;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+
+}
+
+void test_Gmat_vs_sigp()
+{
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -1000000000;//-4.04;
+    double scattering_length_2_KK =  -1000000000;//-4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 1.0;//0.5; 
+    double atmpi = 1.0;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+    double mi = atmK; 
+    double mj = atmK; 
+    double mk = atmpi; 
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    int nPx = 1;
+    int nPy = 0;
+    int nPz = 0; 
+
+    comp Px = ((comp)nPx)*twopibyxiLbyas;
+    comp Py = ((comp)nPy)*twopibyxiLbyas;
+    comp Pz = ((comp)nPz)*twopibyxiLbyas; 
+
+    std::vector<comp> total_P(3); 
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+
+    int npx = 1;
+    int npy = 1; 
+    int npz = 0; 
+
+    comp px = ((comp)npx)*twopibyxiLbyas; 
+    comp py = ((comp)npy)*twopibyxiLbyas; 
+    comp pz = ((comp)npz)*twopibyxiLbyas;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+
+    double Eninitial = 3.05;
+    double Enfinal = 3.2; 
+    double Enpoints = 5; 
+    double delEn = std::abs(Eninitial - Enfinal)/Enpoints; 
+
+    double kxinitial = 0.0;
+    double kxfinal = 2.0; 
+    double kxpoints = 500;
+    double delkx = std::abs(kxinitial - kxfinal)/kxpoints; 
+
+    for(int i=0; i<Enpoints+1; ++i)
+    {
+        double En = Eninitial + i*delEn; 
+
+        std::string filename = "Gmat_vs_sigk_En_"
+                                + std::to_string(En)
+                                + "_nP_" 
+                                + std::to_string(nPx) 
+                                + std::to_string(nPy)
+                                + std::to_string(nPz)
+                                + "_np_"
+                                + std::to_string(npx) 
+                                + std::to_string(npy)
+                                + std::to_string(npz)
+                                + ".dat" ;
+        std::ofstream fout; 
+        fout.open(filename.c_str());
+
+        for(int j=0; j<kxpoints; ++j)
+        {
+            double kx = kxinitial + j*delkx; 
+            double ky = 0.0;
+            double kz = 0.0; 
+
+            std::vector<comp> k(3); 
+            k[0] = kx; 
+            k[1] = ky; 
+            k[2] = kz; 
+
+            comp sigk = sigma_pvec_based(En, k, mi, total_P); 
+
+            comp cutoff = cutoff_function_1(sigk, mj, mk, epsilon_h);
+            comp Gval = G_ij(En, p, k, total_P, mi, mj, mk, L, epsilon_h);
+
+            std::cout<<En<<'\t'
+                     <<kx<<'\t'
+                     <<real(cutoff)<<'\t'
+                     <<imag(cutoff)<<'\t'
+                     <<real(Gval)<<'\t'
+                     <<imag(Gval)<<std::endl;
+
+            fout     <<En<<'\t'
+                     <<kx<<'\t'
+                     <<real(cutoff)<<'\t'
+                     <<imag(cutoff)<<'\t'
+                     <<real(Gval)<<'\t'
+                     <<imag(Gval)<<std::endl;
+
+
+        }
+        fout.close(); 
+    }
+}
+
+//Basically this prints a list of p values 
+//in terms of 2pi/(xi L) times n, created to point
+//out on p-axis where the spectator momentum would be
+
+void p_in_lattice_units()
+{
+    std::ofstream fout; 
+    std::string filename = "p_in_lattice_unit.dat";
+    
+    double pi = std::acos(-1.0); 
+    double L = 5.0;
+    double xi = 1.0;
+    double twopibyxiL = 2.0*pi/(xi*L);
+
+    int nmax = 20; 
+
+    fout.open(filename.c_str()); 
+
+    for(int i=-nmax; i<nmax+1; ++i)
+    {
+        for(int j=-nmax; j<nmax+1; ++j)
+        {
+            for(int k=-nmax; k<nmax+1; ++k)
+            {
+                int nsq = i*i + j*j + k*k; 
+
+                comp px = ((comp)i)*twopibyxiL; 
+                comp py = ((comp)j)*twopibyxiL; 
+                comp pz = ((comp)k)*twopibyxiL;
+
+                comp psq = px*px + py*py + pz*pz; 
+                comp p_val = std::sqrt(psq); 
+
+                fout<<real(p_val)<<'\t'<<imag(p_val)<<std::endl; 
+            }
+        }
+    }
+    fout.close();
+    std::cout<<"file = "<<filename<<" generated."<<std::endl; 
+
+}
 
 
 int main()
@@ -1942,6 +2196,14 @@ int main()
     //test_additionalpoles_in_F3_vs_En_KKpi();
 
     //check the K2inv dependence of F3 for 3-ID
+    //test_3body_non_int();
     test_F3_ID_zeroK2_printer();
+
+    //test_Gmat_vs_sigp(); 
+    //p_in_lattice_units(); 
+
+    comp x = {-1.5,0.0};
+
+    std::cout<<abs(x)<<'\t'<<std::abs(x)<<std::endl; 
     return 0;
 }

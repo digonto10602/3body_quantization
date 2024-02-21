@@ -108,9 +108,22 @@ comp cutoff_function_1( comp sigma_i,
                         double mk, 
                         double epsilon_h   )
 {
-    comp Z = (comp) (1.0 + epsilon_h)*( sigma_i - (comp) std::abs(mj*mj - mk*mk) )/( (mj + mk)*(mj + mk) - std::abs(mj*mj - mk*mk) );
 
-    return Jfunc(Z);
+    if(mj==mk && epsilon_h==0.0)
+    {
+        comp Z = sigma_i/(4.0*mj*mj);
+        return Jfunc(Z); 
+    }
+    else 
+    {
+        std::cout<<"went to else"<<std::endl; 
+        comp Z = (comp) (1.0 + epsilon_h)*( sigma_i - (comp) std::abs(mj*mj - mk*mk) )/( (mj + mk)*(mj + mk) - std::abs(mj*mj - mk*mk) );
+        return Jfunc(Z);
+        
+    }
+
+    //return 1.0; 
+
 }
 
 comp E_to_Ecm(  comp En,
@@ -341,11 +354,10 @@ comp particle_energy(   comp spec_k,
     return omgk; 
 }
 
-void non_int_spectrum_config_maker( int nmax, //maximum shell that it is going to loop over
+void non_int_spectrum_config_maker( std::vector<std::vector<int> > &n_config,
+                                    int nmax, //maximum shell that it is going to loop over
                                     int nsq_max ) //nsq_max is set as a cut off for the shell maker
 {
-    std::vector<std::vector<int> > n_config(3, std::vector<int> ());
-
     for(int i=-nmax; i<nmax+1; ++i)
     {
         for(int j=-nmax; j<nmax+1; ++j)
@@ -384,6 +396,158 @@ comp threebody_non_int_energy_lab(  double m1,
     return total_energy; 
 
 }
+
+void threebody_non_int_spectrum(    std::string filename, 
+                                    double m1, 
+                                    double m2, 
+                                    double m3, 
+                                    std::vector<comp> total_P,
+                                    double xi, 
+                                    double L,
+                                    int nmax, 
+                                    int nsq_max )
+{
+    std::ofstream fout; 
+    fout.open(filename.c_str());
+
+    std::vector<std::vector<int> > n_config(3,std::vector<int> ());
+
+    non_int_spectrum_config_maker(n_config, nmax, nsq_max); 
+
+    int size = n_config[0].size(); 
+
+    std::vector<double> energy; 
+
+    double pi = std::acos(-1.0); 
+    double twopibyxiL = 2.0*pi/(xi*L);
+    
+    /* This has been proven multiple times that this is the formulation 
+    of non-int spectrum that REDSTAR uses to calculate the non-int spectrum and operators */
+    for(int i=0; i<size; ++i)
+    {
+        for(int j=0; j<size; ++j)
+        {
+            comp Px = total_P[0];
+            comp Py = total_P[1];
+            comp Pz = total_P[2];
+            comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+            comp px1 = twopibyxiL*n_config[0][i];
+            comp py1 = twopibyxiL*n_config[1][i];
+            comp pz1 = twopibyxiL*n_config[2][i];
+            comp spec_p1 = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
+            
+            comp px2 = twopibyxiL*n_config[0][j];
+            comp py2 = twopibyxiL*n_config[1][j];
+            comp pz2 = twopibyxiL*n_config[2][j];
+            comp spec_p2 = std::sqrt(px2*px2 + py2*py2 + pz2*pz2);
+
+            comp px3 = Px - px1 - px2; 
+            comp py3 = Py - py1 - py2; 
+            comp pz3 = Pz - pz1 - pz2; 
+            comp spec_p3 = std::sqrt(px3*px3 + py3*py3 + pz3*pz3);
+
+            comp threebodyenergy = threebody_non_int_energy_lab(m1,m2,m3,spec_p1,spec_p2,spec_p3);
+
+            comp Ecm = std::sqrt(threebodyenergy*threebodyenergy - spec_P*spec_P); 
+
+            energy.push_back(real(Ecm)); 
+        }
+    }
+    
+   
+    std::sort( energy.begin(), energy.end() );
+    energy.erase( std::unique( energy.begin(), energy.end() ), energy.end() );
+
+    for(int i=0;i<energy.size();++i)
+    {
+        //std::cout<<energy[i]<<std::endl; 
+        fout<<std::setprecision(20)<<energy[i]<<std::endl;
+    }
+    fout.close(); 
+    std::cout<<"non-int spectrum generated with filename = "<<filename<<std::endl; 
+
+
+}
+
+void threebody_Gpoles(    std::string filename, 
+                                    double m1, 
+                                    double m2, 
+                                    double m3, 
+                                    std::vector<comp> total_P,
+                                    double xi, 
+                                    double L,
+                                    int nmax, 
+                                    int nsq_max )
+{
+    std::ofstream fout; 
+    fout.open(filename.c_str());
+
+    std::vector<std::vector<int> > n_config(3,std::vector<int> ());
+
+    non_int_spectrum_config_maker(n_config, nmax, nsq_max); 
+
+    int size = n_config[0].size(); 
+
+    std::vector<double> energy; 
+
+    double pi = std::acos(-1.0); 
+    double twopibyxiL = 2.0*pi/(xi*L);
+    
+    for(int i=0; i<size; ++i)
+    {
+        for(int j=0; j<size; ++j)
+        {
+            comp Px = total_P[0];
+            comp Py = total_P[1];
+            comp Pz = total_P[2];
+            comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+            comp px1 = twopibyxiL*n_config[0][i];
+            comp py1 = twopibyxiL*n_config[1][i];
+            comp pz1 = twopibyxiL*n_config[2][i];
+            comp spec_p1 = std::sqrt(px1*px1 + py1*py1 + pz1*pz1);
+            
+            comp px2 = twopibyxiL*n_config[0][j];
+            comp py2 = twopibyxiL*n_config[1][j];
+            comp pz2 = twopibyxiL*n_config[2][j];
+            comp spec_p2 = std::sqrt(px2*px2 + py2*py2 + pz2*pz2);
+
+            comp px3 = Px - px1 - px2; 
+            comp py3 = Py - py1 - py2; 
+            comp pz3 = Pz - pz1 - pz2; 
+            comp spec_p3 = std::sqrt(px3*px3 + py3*py3 + pz3*pz3);
+
+            comp particle_energy1 = particle_energy(spec_p1, m1);
+            comp particle_energy2 = particle_energy(spec_p2, m2);
+            comp particle_energy3 = particle_energy(spec_p3, m3);
+
+            comp pole_energy1 = particle_energy1 + particle_energy2 + particle_energy3; 
+            comp pole_energy2 = particle_energy1 + particle_energy2 - particle_energy3; 
+
+            comp Ecm1 = std::sqrt(pole_energy1*pole_energy1 - spec_P*spec_P); 
+            comp Ecm2 = std::sqrt(pole_energy2*pole_energy1 - spec_P*spec_P); 
+
+            energy.push_back(real(Ecm1)); 
+            energy.push_back(real(Ecm2)); 
+        }
+    }
+    
+   
+    std::sort( energy.begin(), energy.end() );
+    energy.erase( std::unique( energy.begin(), energy.end() ), energy.end() );
+
+    for(int i=0;i<energy.size();++i)
+    {
+        //std::cout<<energy[i]<<std::endl; 
+        fout<<std::setprecision(20)<<energy[i]<<std::endl;
+    }
+    fout.close(); 
+    std::cout<<"poles of G generated with filename = "<<filename<<std::endl; 
+
+
+}
+
 
 
 
