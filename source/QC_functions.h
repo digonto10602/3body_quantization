@@ -1577,9 +1577,10 @@ void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
     double mk = m_pi; //here m_pi = m_K
 
     std::vector< std::vector<comp> > p_config1(3,std::vector<comp> ());
+    std::vector< std::vector<int> > n_config1(3,std::vector<int> ());
     double config_tolerance = 1.0e-5;
 
-    config_maker_1(p_config1, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+    config_maker_2(p_config1, n_config1, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
     //std::cout<<"size1 in QC = "<<size1<<std::endl;
     
     std::vector< std::vector<comp> > k_config1 = p_config1;
@@ -1615,7 +1616,7 @@ void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
     Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
     temp_identity_mat.setIdentity();
 
-    Eigen::MatrixXcd H_mat =  F2_mat_1 + G_mat_11;//K2inv_mat_1 + F2_mat_1 + G_mat_11;
+    Eigen::MatrixXcd H_mat =  K2inv_mat_1 + F2_mat_1 + G_mat_11;
 
     F3mat = Eigen::MatrixXcd(size1, size1); 
     F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 
@@ -1632,6 +1633,30 @@ void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
     char debug = 'n';
     if(debug=='y')
     {
+        for(int i=0;i<n_config1[0].size();++i)
+        {
+            double pi = std::acos(-1.0); 
+            double twopibyxiL = 2.0*pi/(xi*L);
+            int nx = n_config1[0][i];
+            int ny = n_config1[1][i];
+            int nz = n_config1[2][i];
+
+            comp px = ((comp)nx)*twopibyxiL;
+            comp py = ((comp)ny)*twopibyxiL;
+            comp pz = ((comp)nz)*twopibyxiL;
+
+            std::vector<comp> check_p(3); 
+            check_p[0] = px; 
+            check_p[1] = py; 
+            check_p[2] = pz; 
+
+            comp sig_check_p = sigma_pvec_based(En, check_p, mi, total_P);
+            comp cutoff_check_p = cutoff_function_1(sig_check_p, mj, mk, epsilon_h); 
+
+            std::cout<<"n = ["<<nx<<'\t'<<ny<<'\t'<<nz<<"]"<<'\t'
+                     <<"cutoff = "<<cutoff_check_p<<std::endl; 
+        }
+
         std::cout << "F2 mat = " << std::endl;
         std::cout << F2_mat_1<< std::endl; 
         std::cout << "========================" << std::endl;

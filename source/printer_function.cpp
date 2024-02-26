@@ -1748,8 +1748,8 @@ void test_F3_ID_zeroK2_printer()
     double xi = 1;//3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -1000000000;//-4.04;
-    double scattering_length_2_KK =  -1000000000;//-4.07;
+    double scattering_length_1_piK = -2;//-4.04;
+    double scattering_length_2_KK =  -2;//-4.07;
     double eta_1 = 1.0;
     double eta_2 = 1.0;//0.5; 
     double atmpi = 1.0;//0.06906;
@@ -1847,19 +1847,19 @@ void test_F3_ID_zeroK2_printer()
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
         double KKKK_threshold = 4.0*atmK; 
 
-        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.00000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
-        double En_points = 500;
+        double En_points = 4000;
 
         double delE = abs(En_initial - En_final)/En_points;
 
-        threebody_non_int_spectrum(nonint_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
-        threebody_Gpoles(gpole_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
+        //threebody_non_int_spectrum(nonint_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
+        //threebody_Gpoles(gpole_file, mi, mj, mk, total_P, xi, Lbyas, nmax, nsq_max);
 
         std::ofstream fout; 
         fout.open(filename.c_str());
 
-        for(int i=1; i<En_points; ++i)
+        for(int i=0; i<En_points+1; ++i)
         {
             double En = En_initial + i*delE; 
 
@@ -1871,7 +1871,7 @@ void test_F3_ID_zeroK2_printer()
 
             test_F3_ID_zeroK2(  F3_mat, F2_mat, K2i_mat, G_mat, En, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             
-            Eigen::MatrixXcd FplusG = F2_mat + G_mat; 
+            Eigen::MatrixXcd K2iplusFplusG = K2i_mat + F2_mat + G_mat; 
             comp Ecm_calculated = E_to_Ecm(En, total_P);
             fout    << std::setprecision(20) 
                     << En << '\t' 
@@ -1881,7 +1881,7 @@ void test_F3_ID_zeroK2_printer()
                     << real(F2_mat.sum()) << '\t'
                     << real(G_mat.determinant()) << '\t'
                     << real(G_mat.sum()) << '\t'
-                    << real(FplusG.sum()) << '\t'
+                    << real(K2iplusFplusG.sum()) << '\t'
                     << real(K2i_mat.sum()) << '\t'
                     //this is for F3 determinant
                     << real(F3_mat.determinant()) << '\t'
@@ -2157,6 +2157,126 @@ void p_in_lattice_units()
 }
 
 
+/* Here we check the number of shells that are activated per energy */
+void activated_shell(   int nPx, int nPy, int nPz )
+{
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -1000000000;//-4.04;
+    double scattering_length_2_KK =  -1000000000;//-4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 1.0;//0.5; 
+    double atmpi = 1.0;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+    double mi = atmK; 
+    double mj = atmK; 
+    double mk = atmpi; 
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    //int nPx = 1;
+    //int nPy = 0;
+    //int nPz = 0; 
+
+    comp Px = ((comp)nPx)*twopibyxiLbyas;
+    comp Py = ((comp)nPy)*twopibyxiLbyas;
+    comp Pz = ((comp)nPz)*twopibyxiLbyas; 
+
+    std::vector<comp> total_P(3); 
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+
+    int npx = 0;
+    int npy = 0; 
+    int npz = 0; 
+
+    comp px = ((comp)npx)*twopibyxiLbyas; 
+    comp py = ((comp)npy)*twopibyxiLbyas; 
+    comp pz = ((comp)npz)*twopibyxiLbyas;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+
+    double Ecm_initial = 3.0;
+    double Ecm_final = 4.0; 
+    
+    double En_initial = real(Ecm_to_E(Ecm_initial, total_P));
+    double En_final = real(Ecm_to_E(Ecm_final, total_P)); 
+    double En_points = 1000.0;
+    double del_En = abs(En_initial - En_final)/En_points; 
+
+    std::string filename = "activated_shell_P_" 
+                            + std::to_string(nPx)
+                            + std::to_string(nPy) 
+                            + std::to_string(nPz)
+                            + ".dat"; 
+
+    std::ofstream fout; 
+    fout.open(filename.c_str()); 
+
+
+    for(int i=0; i<En_points; ++i)
+    {
+        double En = En_initial + i*del_En; 
+        std::vector< std::vector<comp> > p_config1(3, std::vector<comp> ());
+        std::vector< std::vector<int> > n_config(3, std::vector<int> ());
+        double config_tolerance = 1.0e-5;
+
+        config_maker_2(p_config1, n_config, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+
+        int max_nsq = 0;
+        int max_n = 0; 
+
+        for(int j=0; j<n_config[0].size(); ++j)
+        {
+            int nx = n_config[0][j];
+            int ny = n_config[1][j]; 
+            int nz = n_config[2][j]; 
+
+            int nsq = nx*nx + ny*ny + nz*nz; 
+            int n = std::sqrt(nsq); 
+
+            if(nsq>max_nsq) max_nsq = nsq; 
+            if(n>max_n) max_n = n; 
+        }
+
+        std::cout<<En<<'\t'<<max_nsq<<'\t'<<max_n<<std::endl;
+
+        comp Ecm = E_to_Ecm(En, total_P); 
+
+        fout << real(Ecm) << '\t' << En << '\t' << max_nsq << '\t' << n_config[0].size() << std::endl; 
+ 
+    }
+    fout.close(); 
+    
+}
+
+
 int main()
 {
     //This was a test for the identical case for 3particles
@@ -2201,6 +2321,12 @@ int main()
 
     //test_Gmat_vs_sigp(); 
     //p_in_lattice_units(); 
+
+    activated_shell(0,0,0);
+    activated_shell(1,0,0);
+    activated_shell(1,1,0);
+    activated_shell(1,1,1);
+    activated_shell(2,0,0);
 
     comp x = {-1.5,0.0};
 
