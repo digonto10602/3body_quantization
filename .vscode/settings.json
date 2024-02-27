@@ -106,7 +106,8 @@
         "format": "cpp",
         "spanstream": "cpp",
         "stacktrace": "cpp",
-        "stdfloat": "cpp"
+        "stdfloat": "cpp",
+        "__tree": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

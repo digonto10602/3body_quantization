@@ -22,8 +22,8 @@ void generate_K3iso_L20(    int nPx,
     double xi = 3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -4.04;
-    double scattering_length_2_KK = -4.07;
+    double scattering_length_1_piK = 4.04;
+    double scattering_length_2_KK = 4.07;
     double eta_1 = 1.0;
     double eta_2 = 0.5; 
     double atmpi = 0.06906;
@@ -61,7 +61,7 @@ void generate_K3iso_L20(    int nPx,
     std::vector<std::vector<comp> > p_config(3, std::vector<comp>());
     std::vector<std::vector<comp> > k_config(3, std::vector<comp>());
 
-    comp K3iso = -function_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+    comp K3iso = -function_F3inv_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             
     std::cout<<std::setprecision(20); 
     std::cout<<real(K3iso)<<std::endl; 

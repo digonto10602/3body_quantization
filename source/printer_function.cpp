@@ -1735,10 +1735,10 @@ void test_additionalpoles_in_F3_vs_En_KKpi()
 }
 
 
-/* Here we test the F3 functions for identical 3 particles with K2inv set to 
-zero, we then dial K2inv on and see the gradual change of the spectrum, all the 
-change will be done in QC function = test_F3_ID_zeroK2 */
-void test_F3_ID_zeroK2_printer()
+/* Here we test the F3 functions for identical 3 particles with ma set to 
+very small value 1.01, we then dial ma and see the gradual change of the spectrum, all the 
+change will be done in QC function = test_F3_ID */
+void test_F3_ID_printer()
 {
 
     /*  Inputs  */
@@ -1748,8 +1748,8 @@ void test_F3_ID_zeroK2_printer()
     double xi = 1;//3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -2;//-4.04;
-    double scattering_length_2_KK =  -2;//-4.07;
+    double scattering_length_1_piK = 1.01;//-4.04;
+    double scattering_length_2_KK =  1.01;//-4.07;
     double eta_1 = 0.5;
     double eta_2 = 0.5;//0.5; 
     double atmpi = 1.0;//0.06906;
@@ -1811,7 +1811,9 @@ void test_F3_ID_zeroK2_printer()
         int nPy = nP_config[1][i];
         int nPz = nP_config[2][i];
     
-        std::string filename =   "F3_ma=inf_KKpi_L20_nP_" //"F2_check_poles_L20_nP"
+        std::string filename =   "F3_ma=" 
+                                + std::to_string((int)scattering_length_1_piK)
+                                + "_L20_nP_" //"F2_check_poles_L20_nP"
                                 + std::to_string((int)nPx)
                                 + std::to_string((int)nPy)
                                 + std::to_string((int)nPz)
@@ -1845,7 +1847,7 @@ void test_F3_ID_zeroK2_printer()
         //for nP 100 the first run starts 0.4184939100000000245
         double KKpi_threshold = atmK + atmK + atmpi; 
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
-        double KKKK_threshold = 4.0*atmK; 
+        double KKKK_threshold = 5.0*atmK; 
 
         double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.00000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
@@ -2305,7 +2307,7 @@ void pvec_by_hand(  std::vector< std::vector<comp> > &pvec,
 
 }
 
-void test_functions_with_FRL_codebase()
+void test_functions_with_FRL_codebase_ID()
 {
     /*  Inputs  */
     
@@ -2463,6 +2465,229 @@ void test_functions_with_FRL_codebase()
 
 }
 
+void test_functions_with_FRL_codebase_2plus1()
+{
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -2;//-4.04;
+    double scattering_length_2_KK =  -2;//-4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5;//0.5; 
+    double atmpi = 0.5;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+    double mi = atmK; 
+    double mj = atmK; 
+    double mk = atmpi; 
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    int nPx = 0;
+    int nPy = 0;
+    int nPz = 1; 
+
+    comp Px = ((comp)nPx)*twopibyxiLbyas;
+    comp Py = ((comp)nPy)*twopibyxiLbyas;
+    comp Pz = ((comp)nPz)*twopibyxiLbyas; 
+
+    std::vector<comp> total_P(3); 
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+
+    int npx = 0;
+    int npy = 0; 
+    int npz = 0; 
+
+    comp px = ((comp)npx)*twopibyxiLbyas; 
+    comp py = ((comp)npy)*twopibyxiLbyas; 
+    comp pz = ((comp)npz)*twopibyxiLbyas;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+
+    double Ecm_initial = 3.0;
+    double Ecm_final = 4.0; 
+    
+    double En_initial = real(Ecm_to_E(Ecm_initial, total_P));
+    double En_final = real(Ecm_to_E(Ecm_final, total_P)); 
+    double En_points = 1000.0;
+    double del_En = abs(En_initial - En_final)/En_points; 
+
+    double Ecm = 3.15; 
+    comp En = Ecm_to_E(Ecm, total_P);
+
+    std::vector<std::vector<comp> > p_config(3, std::vector<comp>()); 
+    std::vector<std::vector<comp> > k_config(3, std::vector<comp>());
+    std::vector<std::vector<int> > n_config1(3, std::vector<int>()); 
+    std::vector<std::vector<int> > n_config2(3, std::vector<int>()); 
+    double tolerance = 1.0e-10; 
+
+    config_maker_2(p_config, n_config1, En, total_P, mi, mj, mk, L, xi, epsilon_h, tolerance);
+    config_maker_2(k_config, n_config2, En, total_P, mk, mi, mj, L, xi, epsilon_h, tolerance);
+
+    for(int i=0; i<n_config1[0].size(); ++i)
+    {
+        int nx = n_config1[0][i]; 
+        int ny = n_config1[1][i]; 
+        int nz = n_config1[2][i]; 
+
+        std::cout << "n config1 = [" << nx << '\t' << ny << '\t' << nz  << "]" << std::endl; 
+    } 
+
+    for(int i=0; i<n_config2[0].size(); ++i)
+    {
+        int nx = n_config2[0][i]; 
+        int ny = n_config2[1][i]; 
+        int nz = n_config2[2][i]; 
+
+        std::cout << "n config2 = [" << nx << '\t' << ny << '\t' << nz  << "]" << std::endl; 
+    } 
+
+    //abort(); 
+    
+    std::vector<std::vector<comp> > p_config_by_hand(3, std::vector<comp>()); 
+    std::vector<std::vector<comp> > k_config_by_hand(3, std::vector<comp>()); 
+
+
+    pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 0); 
+    pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 1);
+    
+    pvec_by_hand(k_config_by_hand, xi, L, 0, 0, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 1, 0, 0);
+    pvec_by_hand(k_config_by_hand, xi, L,-1, 0, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 0, 1, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 0,-1, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 0, 0, 1);
+    pvec_by_hand(k_config_by_hand, xi, L, 1, 0, 1);
+    pvec_by_hand(k_config_by_hand, xi, L,-1, 0, 1);
+    pvec_by_hand(k_config_by_hand, xi, L, 0, 1, 1);
+    pvec_by_hand(k_config_by_hand, xi, L, 0,-1, 1);
+
+    
+    int size1 = p_config_by_hand[0].size(); 
+    Eigen::MatrixXcd F2_mat_1(size1,size1);
+    F2_i_mat_1( F2_mat_1, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    Eigen::MatrixXcd K2inv_mat_1(size1,size1);
+    K2inv_i_mat( K2inv_mat_1, eta_1, scattering_length_1_piK, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, epsilon_h, L );
+    
+    int size2 = k_config_by_hand[0].size(); 
+    Eigen::MatrixXcd F2_mat_2(size2,size2);
+    F2_i_mat_1( F2_mat_2, En, k_config_by_hand, k_config_by_hand, total_P, mk, mi, mj, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    Eigen::MatrixXcd K2inv_mat_2(size2,size2);
+    K2inv_i_mat( K2inv_mat_2, eta_2, scattering_length_2_KK, En, k_config_by_hand, k_config_by_hand, total_P, mk, mi, mj, epsilon_h, L );
+
+    mi = atmK; 
+    mj = atmK; 
+    mk = atmpi; 
+    
+    Eigen::MatrixXcd G_mat_11(size1,size1);
+    G_ij_mat( G_mat_11, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    mi = atmK; 
+    mj = atmpi; 
+    mk = atmK; 
+
+    Eigen::MatrixXcd G_mat_12(size1,size2);
+    G_ij_mat( G_mat_12, En, p_config_by_hand, k_config_by_hand, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    mi = atmpi; 
+    mj = atmK; 
+    mk = atmK; 
+
+    Eigen::MatrixXcd G_mat_21(size2,size1);
+    G_ij_mat( G_mat_21, En, k_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    Eigen::MatrixXcd F2_mat(size1 + size2,size1 + size2);
+
+    Eigen::MatrixXcd Filler0_12(size1,size2);
+    Eigen::MatrixXcd Filler0_21(size2,size1);
+    Eigen::MatrixXcd Filler0_22(size2,size2);
+
+    Filler0_12 = Eigen::MatrixXcd::Zero(size1,size2);
+    Filler0_21 = Eigen::MatrixXcd::Zero(size2,size1);
+    Filler0_22 = Eigen::MatrixXcd::Zero(size2,size2);
+    
+    F2_mat <<   F2_mat_1,   Filler0_12,
+                Filler0_21, F2_mat_2; 
+
+    //abort();
+    Eigen::MatrixXcd K2inv_mat(size1 + size2,size1 + size2);
+
+    K2inv_mat   <<  K2inv_mat_1, Filler0_12,
+                    Filler0_21,  2.0*K2inv_mat_2;
+
+    Eigen::MatrixXcd G_mat(size1 + size2,size1 + size2);
+
+    G_mat_12 = std::sqrt(2.0)*G_mat_12;
+    G_mat_21 = std::sqrt(2.0)*G_mat_21;
+
+    G_mat  <<   G_mat_11, G_mat_12,
+                G_mat_21, Filler0_22;
+
+
+    Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
+    temp_identity_mat.setIdentity();
+
+    Eigen::MatrixXcd H_mat = K2inv_mat + F2_mat + G_mat; 
+    //H_mat = H_mat*10000;
+    Eigen::MatrixXcd H_mat_inv(size1 + size2,size1 + size2);
+    double relerror = 0.0;
+
+    //LinearSolver_3(H_mat, H_mat_inv, temp_identity_mat, relerror);
+    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+
+    Eigen::MatrixXcd F3mat(size1+size2, size1+size2); 
+    F3mat = (F2_mat/3.0 - F2_mat*H_mat_inv*F2_mat);//temp_F3_mat; 
+    
+    
+    std::cout<<"F2 = "<<std::endl; 
+    std::cout<<F2_mat<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+    std::cout<<"G = "<<std::endl; 
+    std::cout<<G_mat<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+    std::cout<<"K2i = "<<std::endl; 
+    std::cout<<K2inv_mat<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+
+    std::cout<<"F3 = "<<std::endl; 
+    std::cout<<F3mat<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+    std::cout<<std::setprecision(20);
+    std::cout<<"F3iso = "<<F3mat.sum()<<std::endl;
+    
+}
+
 int main()
 {
     //This was a test for the identical case for 3particles
@@ -2503,7 +2728,7 @@ int main()
 
     //check the K2inv dependence of F3 for 3-ID
     //test_3body_non_int();
-    test_F3_ID_zeroK2_printer();
+    //test_F3_ID_printer();
 
     //test_Gmat_vs_sigp(); 
     //p_in_lattice_units(); 
@@ -2514,7 +2739,9 @@ int main()
     //activated_shell(1,1,1);
     //activated_shell(0,0,2);
 
-    //test_functions_with_FRL_codebase();
+    //test_functions_with_FRL_codebase_ID();
+
+    test_functions_with_FRL_codebase_2plus1();
     
     return 0;
 }

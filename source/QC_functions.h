@@ -762,7 +762,7 @@ double det_F3_ND_2plus1_mat(    comp En,
     return result; 
 }
 
-
+/* This function has become redundant and will be deleted*/
 /* Here we test for additional poles 
 that can come from the denominator of the F3 functions going 
 to zero. We change the definition and only include the denominator
@@ -954,6 +954,8 @@ void testF3_additionalpoles_1(  Eigen::MatrixXcd &F3matdenom,
     }
 }
 
+/* This function has become redundant and will be deleted*/
+
 void testF3_additionalpoles_2(  Eigen::MatrixXcd &F3matdenom,
                                 Eigen::MatrixXcd &F2mat,
                                 Eigen::MatrixXcd &K2imat,
@@ -1140,6 +1142,8 @@ void testF3_additionalpoles_2(  Eigen::MatrixXcd &F3matdenom,
         std::cout << "========================" << std::endl;
     }
 }
+
+/* This function has become redundant and will be deleted*/
 
 void testF3_additionalpoles_3(  Eigen::MatrixXcd &F3matdenom,
                                 Eigen::MatrixXcd &F2mat,
@@ -1329,7 +1333,14 @@ void testF3_additionalpoles_3(  Eigen::MatrixXcd &F3matdenom,
     }
 }
 
-comp function_F3_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
+
+/* This function return the F3inv_sum which is used to 
+get an estimate of K3iso from lattice data. This returns only the 
+real part of the F3inv_sum, this function is only used in the cpp 
+called generate_K3iso.cpp, the executable created is used by the
+python script named K3iso_maker.py  */
+
+comp function_F3inv_ND_2plus1_mat( Eigen::MatrixXcd &F3mat,
                                 Eigen::MatrixXcd &F2mat,
                                 Eigen::MatrixXcd &K2imat,
                                 Eigen::MatrixXcd &Gmat, 

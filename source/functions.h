@@ -122,7 +122,7 @@ comp cutoff_function_1( comp sigma_i,
     }
     else 
     {
-        std::cout<<"went to else"<<std::endl; 
+        //std::cout<<"went to else"<<std::endl; 
         comp Z = (comp) (1.0 + epsilon_h)*( sigma_i - (comp) std::abs(mj*mj - mk*mk) )/( (mj + mk)*(mj + mk) - std::abs(mj*mj - mk*mk) );
         return Jfunc(Z);
         

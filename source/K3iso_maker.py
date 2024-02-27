@@ -423,7 +423,7 @@ def jackknifeavg_centralvalue_lattice_data():
 #P111()
 #P200()
 
-#jackknifeavg_lattice_data()
+jackknifeavg_lattice_data()
 jackknifeavg_centralvalue_lattice_data()
 
 
