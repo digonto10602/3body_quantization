@@ -1750,8 +1750,8 @@ void test_F3_ID_zeroK2_printer()
 
     double scattering_length_1_piK = -2;//-4.04;
     double scattering_length_2_KK =  -2;//-4.07;
-    double eta_1 = 1.0;
-    double eta_2 = 1.0;//0.5; 
+    double eta_1 = 0.5;
+    double eta_2 = 0.5;//0.5; 
     double atmpi = 1.0;//0.06906;
     double atmK = 1.0;//0.09698;
 
@@ -1785,7 +1785,7 @@ void test_F3_ID_zeroK2_printer()
                 if(nsq<=4)
                 {
 
-                    if(i>=j && j>=k)
+                    if(i<=j && j<=k)
                     {
                         std::cout<<"P config:"<<std::endl;
                         std::cout<<i<<'\t'<<j<<'\t'<<k<<std::endl; 
@@ -1800,7 +1800,7 @@ void test_F3_ID_zeroK2_printer()
         }
     } 
 
-
+    //abort(); 
     int P_config_size = nP_config[0].size();
 
     /*-----------------------------------------------------*/
@@ -1871,7 +1871,10 @@ void test_F3_ID_zeroK2_printer()
 
             test_F3_ID_zeroK2(  F3_mat, F2_mat, K2i_mat, G_mat, En, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             
-            Eigen::MatrixXcd K2iplusFplusG = K2i_mat + F2_mat + G_mat; 
+            Eigen::MatrixXcd K2iplusFplusG = K2i_mat + 0.5*F2_mat + G_mat; 
+
+            F2_mat = 0.5*F2_mat; 
+            
             comp Ecm_calculated = E_to_Ecm(En, total_P);
             fout    << std::setprecision(20) 
                     << En << '\t' 
@@ -2277,6 +2280,189 @@ void activated_shell(   int nPx, int nPy, int nPz )
 }
 
 
+/* Here we test individual matrices of F2, G, K2i and F3 for a fixed 
+energy with the FRL code base, we first check if the config maker is 
+generating the same number of momentum configurations for the kinematic 
+point, we then hardcode the spectator momentum as it is done in FRL and 
+check if the generated matrices are the same for both cases  */
+
+void pvec_by_hand(  std::vector< std::vector<comp> > &pvec,
+                    double xi, 
+                    double L, 
+                    int npx, 
+                    int npy, 
+                    int npz )
+{
+    double pi = std::acos(-1.0); 
+
+    comp px = 2.0*pi/(xi*L)*((comp) npx);
+    comp py = 2.0*pi/(xi*L)*((comp) npy);
+    comp pz = 2.0*pi/(xi*L)*((comp) npz);
+    
+    pvec[0].push_back(px); 
+    pvec[1].push_back(py); 
+    pvec[2].push_back(pz); 
+
+}
+
+void test_functions_with_FRL_codebase()
+{
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -2;//-4.04;
+    double scattering_length_2_KK =  -2;//-4.07;
+    double eta_1 = 0.5;
+    double eta_2 = 1.0;//0.5; 
+    double atmpi = 1.0;//0.06906;
+    double atmK = 1.0;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+    double mi = atmK; 
+    double mj = atmK; 
+    double mk = atmpi; 
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+    int nmax = 4;
+    int nsq_max = 4; 
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    int nPx = 0;
+    int nPy = 0;
+    int nPz = 1; 
+
+    comp Px = ((comp)nPx)*twopibyxiLbyas;
+    comp Py = ((comp)nPy)*twopibyxiLbyas;
+    comp Pz = ((comp)nPz)*twopibyxiLbyas; 
+
+    std::vector<comp> total_P(3); 
+    total_P[0] = Px; 
+    total_P[1] = Py; 
+    total_P[2] = Pz; 
+
+    comp spec_P = std::sqrt(Px*Px + Py*Py + Pz*Pz); 
+
+    int npx = 0;
+    int npy = 0; 
+    int npz = 0; 
+
+    comp px = ((comp)npx)*twopibyxiLbyas; 
+    comp py = ((comp)npy)*twopibyxiLbyas; 
+    comp pz = ((comp)npz)*twopibyxiLbyas;
+
+    comp spec_p = std::sqrt(px*px + py*py + pz*pz); 
+    std::vector<comp> p(3);
+    p[0] = px; 
+    p[1] = py; 
+    p[2] = pz; 
+
+    double Ecm_initial = 3.0;
+    double Ecm_final = 4.0; 
+    
+    double En_initial = real(Ecm_to_E(Ecm_initial, total_P));
+    double En_final = real(Ecm_to_E(Ecm_final, total_P)); 
+    double En_points = 1000.0;
+    double del_En = abs(En_initial - En_final)/En_points; 
+
+    double Ecm = 3.15; 
+    comp En = Ecm_to_E(Ecm, total_P);
+
+    std::vector<std::vector<comp> > p_config(3, std::vector<comp>()); 
+    std::vector<std::vector<int> > n_config(3, std::vector<int>()); 
+    double tolerance = 1.0e-10; 
+
+    config_maker_2(p_config, n_config, En, total_P, mi, mj, mk, L, xi, epsilon_h, tolerance);
+
+    for(int i=0; i<n_config[0].size(); ++i)
+    {
+        int nx = n_config[0][i]; 
+        int ny = n_config[1][i]; 
+        int nz = n_config[2][i]; 
+
+        std::cout << "n config = [" << nx << '\t' << ny << '\t' << nz  << "]" << std::endl; 
+    } 
+
+    std::vector<std::vector<comp> > p_config_by_hand(3, std::vector<comp>()); 
+
+    pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 0); 
+    pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 1);
+    pvec_by_hand(p_config_by_hand, xi, L, 1, 0, 1);
+    pvec_by_hand(p_config_by_hand, xi, L,-1, 0, 1);
+    pvec_by_hand(p_config_by_hand, xi, L, 0, 1, 1);
+    pvec_by_hand(p_config_by_hand, xi, L, 0,-1, 1);
+
+    int size1 = p_config_by_hand[0].size(); 
+    Eigen::MatrixXcd F2_mat_1(size1,size1);
+    F2_i_mat_1( F2_mat_1, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    std::cout<<"F2 = "<<std::endl; 
+    std::cout<<0.5*F2_mat_1<<std::endl;
+    std::cout<<"====================================="<<std::endl; 
+
+    Eigen::MatrixXcd G_mat_11(size1,size1);
+    G_ij_mat( G_mat_11, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    std::cout<<"G = "<<std::endl; 
+    std::cout<<G_mat_11<<std::endl;
+    std::cout<<"====================================="<<std::endl; 
+
+    Eigen::MatrixXcd K2inv_mat_1(size1,size1);
+    K2inv_i_mat( K2inv_mat_1, eta_1, scattering_length_1_piK, En, p_config_by_hand, p_config_by_hand, total_P, mi, mj, mk, epsilon_h, L );
+    
+    std::cout<<"K2i = "<<std::endl; 
+    std::cout<<K2inv_mat_1<<std::endl;
+    std::cout<<"====================================="<<std::endl; 
+
+    Eigen::MatrixXcd F3mat(size1, size1);
+
+    Eigen::MatrixXcd temp_identity_mat(size1,size1);
+    temp_identity_mat.setIdentity();
+    double relerror = 0; 
+
+    Eigen::MatrixXcd H_mat =  K2inv_mat_1 + 0.5*F2_mat_1 + G_mat_11;
+    
+    Eigen::MatrixXcd H_mat_inv(size1, size1); 
+
+    Eigen::MatrixXcd NewF2 = 0.5*F2_mat_1;
+
+    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+
+    Eigen::MatrixXcd temp1 = H_mat_inv*NewF2;
+    Eigen::MatrixXcd temp2 = NewF2*temp1; 
+    Eigen::MatrixXcd temp3 = NewF2/3.0; 
+
+    //F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 
+
+    F3mat = temp3 - temp2;//temp_F3_mat; 
+
+    std::cout<<"F3 = "<<std::endl; 
+    std::cout<<F3mat<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+
+    std::cout<<"Hmat inv = "<<std::endl; 
+    std::cout<<H_mat_inv<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+    std::cout<<"check inv = "<<std::endl;
+    std::cout<<H_mat*H_mat_inv<<std::endl; 
+    std::cout<<"====================================="<<std::endl; 
+
+}
+
 int main()
 {
     //This was a test for the identical case for 3particles
@@ -2322,14 +2508,13 @@ int main()
     //test_Gmat_vs_sigp(); 
     //p_in_lattice_units(); 
 
-    activated_shell(0,0,0);
-    activated_shell(1,0,0);
-    activated_shell(1,1,0);
-    activated_shell(1,1,1);
-    activated_shell(2,0,0);
+    //activated_shell(0,0,0);
+    //activated_shell(0,0,1);
+    //activated_shell(0,1,1);
+    //activated_shell(1,1,1);
+    //activated_shell(0,0,2);
 
-    comp x = {-1.5,0.0};
-
-    std::cout<<abs(x)<<'\t'<<std::abs(x)<<std::endl; 
+    //test_functions_with_FRL_codebase();
+    
     return 0;
 }

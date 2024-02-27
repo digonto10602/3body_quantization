@@ -39,10 +39,23 @@ comp G_ij(  comp En,
     comp oneby2omegapLcube = 1.0/(2.0*omega_func(spec_p,mi)*L*L*L);
     comp oneby2omegakLcube = 1.0/(2.0*omega_func(spec_k,mj)*L*L*L);
 
-    comp sig_i = sigma(En,spec_p,mi,total_P_val);
-    comp sig_j = sigma(En,spec_k,mj,total_P_val);
+    comp sig_i = sigma_pvec_based(En,p,mi,total_P);//sigma(En,spec_p,mi,total_P_val);
+    comp sig_j = sigma_pvec_based(En,k,mj,total_P);//sigma(En,spec_k,mj,total_P_val);
     comp cutoff1 = cutoff_function_1(sig_i,mj,mk,epsilon_h);
     comp cutoff2 = cutoff_function_1(sig_j,mi,mk,epsilon_h);
+
+    char debug = 'n';
+    if(debug=='y')
+    {
+        std::cout << "=============================================" << std::endl; 
+        std::cout << "p = " << px << '\t' << py << '\t' << pz << std::endl; 
+        std::cout << "sigp = " << sig_i << std::endl; 
+        std::cout << "cutoff1 = " << cutoff1 << std::endl;
+        std::cout << "k = " << kx << '\t' << ky << '\t' << kz << std::endl; 
+        std::cout << "sigk = " << sig_j << std::endl; 
+        std::cout << "cutoff2 = " << cutoff2 << std::endl; 
+        std::cout << "=============================================" << std::endl; 
+    }
 
     comp mom_P_p_k_x = Px - px - kx;
     comp mom_P_p_k_y = Py - py - ky;
@@ -51,12 +64,12 @@ comp G_ij(  comp En,
     comp mom_P_p_k = std::sqrt(mom_P_p_k_x*mom_P_p_k_x + mom_P_p_k_y*mom_P_p_k_y + mom_P_p_k_z*mom_P_p_k_z);
 
 
-    //comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj))
-    //            -mom_P_p_k*mom_P_p_k - mk*mk; 
+    comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj))
+                -mom_P_p_k*mom_P_p_k - mk*mk; 
 
     comp tol = {0.0,1.0e-10};
     //comp denom = (En - omega_func(spec_p,mi) - omega_func(spec_k,mj) - omega_func(mom_P_p_k,mk))*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj) + omega_func(mom_P_p_k,mk) + tol);
-    comp denom = 2.0*omega_func(mom_P_p_k,mk)*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj) - omega_func(mom_P_p_k,mk));
+    //comp denom = 2.0*omega_func(mom_P_p_k,mk)*(En - omega_func(spec_p,mi) - omega_func(spec_k,mj) - omega_func(mom_P_p_k,mk));
 
     comp onebydenom = 1.0/denom; 
 

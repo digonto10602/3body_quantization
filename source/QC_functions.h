@@ -1613,17 +1613,29 @@ void test_F3_ID_zeroK2( Eigen::MatrixXcd &F3mat,
     G_ij_mat( G_mat_11, En, p_config1, k_config1, total_P, mi, mj, mk, L, epsilon_h ); 
 
 
-    Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
+    Eigen::MatrixXcd temp_identity_mat(size1,size1);
     temp_identity_mat.setIdentity();
+    double relerror = 0; 
 
-    Eigen::MatrixXcd H_mat =  K2inv_mat_1 + F2_mat_1 + G_mat_11;
+    Eigen::MatrixXcd H_mat =  K2inv_mat_1 + 0.5*F2_mat_1 + G_mat_11;
+    
+    Eigen::MatrixXcd H_mat_inv(size1, size1); 
+
+    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+
+    Eigen::MatrixXcd NewF2 = 0.5*F2_mat_1;
+    Eigen::MatrixXcd temp1 = H_mat_inv*NewF2;
+    Eigen::MatrixXcd temp2 = NewF2*temp1; 
+    Eigen::MatrixXcd temp3 = NewF2/3.0; 
 
     F3mat = Eigen::MatrixXcd(size1, size1); 
-    F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 
+    //F3mat = (F2_mat_1/3.0 - F2_mat_1*H_mat.inverse()*F2_mat_1);//temp_F3_mat; 
 
-    F2mat = Eigen::MatrixXcd(size1+size2, size1+size2); 
-    K2imat = Eigen::MatrixXcd(size1+size2, size1+size2); 
-    Gmat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    F3mat = temp3 - temp2;//temp_F3_mat; 
+
+    F2mat = Eigen::MatrixXcd(size1, size1); 
+    K2imat = Eigen::MatrixXcd(size1, size1); 
+    Gmat = Eigen::MatrixXcd(size1, size1); 
 
     Gmat = G_mat_11; 
     F2mat = F2_mat_1; 
