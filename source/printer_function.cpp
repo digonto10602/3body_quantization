@@ -407,14 +407,14 @@ void test_detF3inv_vs_En()
     /*  Inputs  */
     
     double L = 5;
-    double xi = 3.444;
+    double xi = 1.0;//3.444;
 
-    double scattering_length_1_piK = 0.15;//-4.04;
-    double scattering_length_2_KK = 0.1;//-4.07;
+    double scattering_length_1_piK = -2.0;//0.15;//-4.04;
+    double scattering_length_2_KK = -2.0;//0.1;//-4.07;
     double eta_1 = 1.0;
     double eta_2 = 0.5; 
-    double atmpi = 50;//0.06906;
-    double atmK = 100;//0.09698;
+    double atmpi = 0.9;//0.06906;
+    double atmK = 1;//0.09698;
 
     atmpi = atmpi/atmK; 
     atmK = 1.0;
@@ -443,7 +443,7 @@ void test_detF3inv_vs_En()
     double delE = abs(En_initial - En_final)/En_points; 
 
     std::ofstream fout; 
-    std::string filename = "det_F3inv_test_L5.dat";
+    std::string filename = "F3_2plus1_test_poles_L5.dat";
     fout.open(filename.c_str());
 
     for(int i=0; i<En_points+1; ++i)
@@ -1071,6 +1071,177 @@ void test_detF3inv_vs_En_KKpi()
                     << real(F2_mat.determinant()) << '\t'
                     << real(G_mat.determinant()) << '\t'
                     << real(K2i_mat.determinant()) << '\t'
+                    //this is for F3 determinant
+                    << real(F3_mat.determinant()) << '\t'
+                    //this is for F3inv determinant
+                    //<< real(F3_mat_inv.determinant()) << '\t'
+                    //this is for K3iso
+                    //<< -real(F3_mat_inv.sum()) << std::endl;
+                    //for F3iso 
+                    << real(F3_mat.sum()) << std::endl;
+            std::cout<<std::setprecision(20);
+            std::cout<< "En = " << En << '\t'
+                     << "P = " << nPx << nPy << nPz << '\t' 
+                     << "Ecm = " << Ecm_calculated << '\t' 
+                     << "detF3 = " << F3_mat.determinant() << '\t'
+                     << "F3iso = " << F3_mat.sum() << '\t'
+                     //<< "det of F3inv = "<< real(F3_mat_inv.determinant()) << '\t' 
+                     //<< "K3df_iso = "<< -real(F3_mat_inv.sum()) << std::endl;
+                     << std::endl; 
+        }
+        fout.close();
+    }               
+}
+
+void test_mass_dependences_F3_2plus1_vs_En()
+{
+
+    /*  Inputs  */
+    
+    double L = 5;
+    double Lbyas = L;
+    double xi = 1;//3.444; /* found from lattice */
+    
+
+    double scattering_length_1_piK = -2.0;//4.04;
+    double scattering_length_2_KK = -2.0;//4.07;
+    double eta_1 = 1.0;
+    double eta_2 = 0.5; 
+    double M1 = 1.0;
+    double M2 = 0.9;
+
+    /*Since this code is copied from the function
+    above, we make minimal changes, thats why intro
+    duced M1 and M2 */
+    double atmpi = M1;//0.06906;
+    double atmK = M2;//0.09698;
+
+    //atmpi = atmpi/atmK; 
+    //atmK = 1.0;
+    
+
+    double alpha = 0.5;
+    double epsilon_h = 0.0;
+    int max_shell_num = 20;
+
+    double pi = std::acos(-1.0); 
+    comp twopibyL = 2.0*pi/L;
+    comp twopibyxiLbyas = 2.0*pi/(xi*Lbyas);
+
+    /*---------------------------------------------------*/
+
+    /*---------------------P config----------------------*/
+    int nPmax = 20;
+    std::vector<std::vector<int> > nP_config(3,std::vector<int>());
+
+    for(int i=0;i<nPmax+1;++i)
+    {
+        for(int j=0;j<nPmax+1;++j)
+        {
+            for(int k=0;k<nPmax+1;++k)
+            {
+                int nsq = i*i + j*j + k*k;
+                if(nsq<=4)
+                {
+
+                    if(i>=j && j>=k)
+                    {
+                        std::cout<<"P config:"<<std::endl;
+                        std::cout<<i<<'\t'<<j<<'\t'<<k<<std::endl; 
+
+                        nP_config[0].push_back(i);
+                        nP_config[1].push_back(j);
+                        nP_config[2].push_back(k);
+            
+                    }
+                }
+            }
+        }
+    } 
+
+
+    int P_config_size = nP_config[0].size();
+
+    /*-----------------------------------------------------*/
+
+    for(int i=0;i<P_config_size;++i)
+    {
+        int nPx = nP_config[0][i];
+        int nPy = nP_config[1][i];
+        int nPz = nP_config[2][i];
+    
+        std::string filename =    "mass_dependence_test_M1="
+                                + std::to_string(M1)
+                                + "_M2="
+                                + std::to_string(M2)
+                                + "_F3_L="
+                                + std::to_string(L)
+                                + "_nP_"
+                                + std::to_string((int)nPx)
+                                + std::to_string((int)nPy)
+                                + std::to_string((int)nPz)
+                                + ".dat";
+
+        //std::string filename = "temp";
+        comp Px = ((comp)nPx)*twopibyxiLbyas;//twopibyL;
+        comp Py = ((comp)nPy)*twopibyxiLbyas;//twopibyL;
+        comp Pz = ((comp)nPz)*twopibyxiLbyas;//twopibyL;
+        std::vector<comp> total_P(3);
+        total_P[0] = Px; 
+        total_P[1] = Py; 
+        total_P[2] = Pz; 
+        comp total_P_val = std::sqrt(Px*Px + Py*Py + Pz*Pz);
+
+
+        double mi = atmK;
+        double mj = atmK;
+        double mk = atmpi; 
+        //for nP 100 the first run starts 0.4184939100000000245
+        double KKpi_threshold = atmK + atmK + atmpi; 
+        double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
+        double KKKK_threshold = 5.0*atmK; 
+
+        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.0000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+        double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
+        double En_points = 4000;
+
+        double delE = abs(En_initial - En_final)/En_points;
+
+        std::ofstream fout; 
+        fout.open(filename.c_str());
+
+        for(int i=0; i<En_points+1; ++i)
+        {
+            double En = En_initial + i*delE; 
+
+            std::vector< std::vector<comp> > p_config(3,std::vector<comp> ());
+            double config_tolerance = 1.0e-5;
+            config_maker_1(p_config, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+
+            std::vector< std::vector<comp> > k_config = p_config; 
+
+
+            int size = p_config[0].size();
+            //std::cout<<"size = "<<size<<std::endl;  
+            Eigen::MatrixXcd F3_mat;//(Eigen::Dynamic,Eigen::Dynamic);
+            Eigen::MatrixXcd F2_mat;
+            Eigen::MatrixXcd K2i_mat; 
+            Eigen::MatrixXcd G_mat; 
+
+
+            test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            //std::cout<<"ran until here"<<std::endl;
+    
+            //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
+            //Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
+            //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
+            comp Ecm_calculated = E_to_Ecm(En, total_P);
+            fout    << std::setprecision(20) 
+                    << En << '\t' 
+                    << real(Ecm_calculated) << '\t'
+                    << real(F2_mat.sum()) << '\t'
+                    << real(G_mat.sum()) << '\t'
+                    << real(K2i_mat.sum()) << '\t'
                     //this is for F3 determinant
                     << real(F3_mat.determinant()) << '\t'
                     //this is for F3inv determinant
@@ -2714,7 +2885,7 @@ int main()
     //test_detF3inv_vs_En();
 
     //This function is for F3 and F3inv both:
-    //test_detF3inv_vs_En_KKpi();
+    test_detF3inv_vs_En_KKpi();
 
     //test_uneven_matrix();
 
@@ -2741,7 +2912,7 @@ int main()
 
     //test_functions_with_FRL_codebase_ID();
 
-    test_functions_with_FRL_codebase_2plus1();
+    //test_functions_with_FRL_codebase_2plus1();
     
     return 0;
 }
