@@ -2885,7 +2885,9 @@ int main()
     //test_detF3inv_vs_En();
 
     //This function is for F3 and F3inv both:
-    test_detF3inv_vs_En_KKpi();
+    //test_detF3inv_vs_En_KKpi();
+
+    test_mass_dependences_F3_2plus1_vs_En();
 
     //test_uneven_matrix();
 
