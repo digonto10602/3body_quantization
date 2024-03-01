@@ -1027,9 +1027,9 @@ void test_detF3inv_vs_En_KKpi()
         //for nP 100 the first run starts 0.4184939100000000245
         double KKpi_threshold = atmK + atmK + atmpi; 
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
-        double KKKK_threshold = 4.0*atmK; 
+        double KKKK_threshold = 5.0*atmK; 
 
-        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.00001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
+        double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.0000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
         double En_points = 4000;
 
@@ -1038,7 +1038,7 @@ void test_detF3inv_vs_En_KKpi()
         std::ofstream fout; 
         fout.open(filename.c_str());
 
-        for(int i=1; i<En_points; ++i)
+        for(int i=0; i<En_points; ++i)
         {
             double En = En_initial + i*delE; 
 
@@ -1060,25 +1060,39 @@ void test_detF3inv_vs_En_KKpi()
             test_F3_ND_2plus1_mat(  F3_mat, F2_mat, K2i_mat, G_mat, En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             //std::cout<<"ran until here"<<std::endl;
     
+            Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
             //std::cout<<std::setprecision(3)<<"F3mat=\n"<<F3_mat<<std::endl; 
             //Eigen::MatrixXcd F3_mat_inv = F3_mat.inverse();
             //double res = det_F3_ND_2plus1_mat( En, p_config, k_config, total_P, eta_1, eta_2, scattering_length_1_piK, scattering_length_2_KK, atmpi, atmK, alpha, epsilon_h, L, xi, max_shell_num); 
             comp Ecm_calculated = E_to_Ecm(En, total_P);
+
+            comp detF3 = F3_mat.determinant(); 
+            comp sumF3 = F3_mat.sum(); 
+            comp detF3inv = F3_mat_inv.determinant(); 
+            comp sumF3inv = F3_mat_inv.sum(); 
+
             fout    << std::setprecision(20) 
                     << En << '\t' 
                     << real(Ecm_calculated) << '\t'
-                    << imag(Ecm_calculated) << '\t'
-                    << real(F2_mat.determinant()) << '\t'
-                    << real(G_mat.determinant()) << '\t'
-                    << real(K2i_mat.determinant()) << '\t'
+                    //<< real(F2_mat.sum()) << '\t'
+                    //<< real(G_mat.sum()) << '\t'
+                    //<< real(K2i_mat.sum()) << '\t'
                     //this is for F3 determinant
-                    << real(F3_mat.determinant()) << '\t'
+                    << real(detF3) << '\t'
+                    << imag(detF3) << '\t'
                     //this is for F3inv determinant
                     //<< real(F3_mat_inv.determinant()) << '\t'
                     //this is for K3iso
                     //<< -real(F3_mat_inv.sum()) << std::endl;
                     //for F3iso 
-                    << real(F3_mat.sum()) << std::endl;
+                    << real(sumF3) << '\t'
+                    << imag(sumF3) << '\t'
+    
+                    << real(detF3inv) << '\t'
+                    << imag(detF3inv) << '\t'
+                    << real(sumF3inv) << '\t'
+                    << imag(sumF3inv) << std::endl;
+
             std::cout<<std::setprecision(20);
             std::cout<< "En = " << En << '\t'
                      << "P = " << nPx << nPy << nPz << '\t' 
@@ -1108,13 +1122,13 @@ void test_mass_dependences_F3_2plus1_vs_En()
     double eta_1 = 1.0;
     double eta_2 = 0.5; 
     double M1 = 1.0;
-    double M2 = 0.9;
+    double M2 = 0.99995;
 
     /*Since this code is copied from the function
     above, we make minimal changes, thats why intro
     duced M1 and M2 */
-    double atmpi = M1;//0.06906;
-    double atmK = M2;//0.09698;
+    double atmpi = M2;//0.06906;
+    double atmK = M1;//0.09698;
 
     //atmpi = atmpi/atmK; 
     //atmK = 1.0;
@@ -2885,9 +2899,9 @@ int main()
     //test_detF3inv_vs_En();
 
     //This function is for F3 and F3inv both:
-    //test_detF3inv_vs_En_KKpi();
+    test_detF3inv_vs_En_KKpi();
 
-    test_mass_dependences_F3_2plus1_vs_En();
+    //test_mass_dependences_F3_2plus1_vs_En();
 
     //test_uneven_matrix();
 
