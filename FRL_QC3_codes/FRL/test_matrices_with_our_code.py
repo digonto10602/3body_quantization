@@ -175,7 +175,7 @@ print("=======================================")
 # Define 2+1 system parameters --- *MUST ALWAYS RESCALE SO THAT M1=1*
 ################################################################################
 #M1, M2 = M12
-M1,M2 = [1.,0.5]  # The 3-pt. system masses are [M1,M1,M2], e.g. in MeV
+M1,M2 = [1.,0.99995]  # The 3-pt. system masses are [M1,M1,M2], e.g. in MeV
 M1,M2 = [1.,M2/M1]  # We always rescale by M1 to make everything dimensionless
 M12 = [M1,M2]
 parity = -1         # Particle parity (-1 for pseudoscalars)
@@ -248,8 +248,36 @@ print("F3iso = ",np.sum(F3))
 
 #fout.close() 
 
+#Here we make F3 a function of energy E,
 
+threeparticle_threshold =  M1 + M1 + M2
+fiveparticle_threshold = 5.0*M1 
 
+En_initial = defns.E_to_Ecm(threeparticle_threshold,L,nnP,rev=True)
+En_final = defns.E_to_Ecm(fiveparticle_threshold,L,nnP,rev=True)
+En_points = 2000
+del_En = abs(En_initial - En_final)/En_points 
+outfile = "F3_massdependence_FRL_L5.dat"
+f = open(outfile,'w')
+
+for i in range(En_points):
+  En = En_initial + i*del_En 
+  Ecm = defns.E_to_Ecm(En,L,nnP,rev=False)
+
+  nnk_list_1 = defns.list_nnk_nnP(En,L,nnP, Mijk=[M1,M1,M2])
+  nnk_list_2 = defns.list_nnk_nnP(En,L,nnP, Mijk=[M2,M1,M1])
+  #print("nnk_list_1 = ",nnk_list_1)
+  #print("nnk_list_2 = ",nnk_list_2)
+  nnk_list_12 = [nnk_list_1, nnk_list_2]
+  F3 = F3_mat.F3mat_2plus1(En,L,nnP, f_qcot_1sp1, f_qcot_2s, M12=M12, waves='s',nnk_lists_12=nnk_list_12)
+  F3sum = np.sum(F3)
+  f.write(  str(En) + '\t'
+          + str(Ecm) + '\t'
+          + str(F3sum) + '\n')
+  print  (i, En, Ecm, F3sum)
+
+  
+f.close() 
 
 
 ################################################################################

@@ -35,7 +35,7 @@ def G_ij(E, L, nnp, nnk,l1,m1,l2,m2,nnP, Mijk=[1,1,1], return_all=False):
     sig_pi = defns.sigma_i(E,Pvec,pvec,Mi=Mpi)
     sig_kj = defns.sigma_i(E,Pvec,kvec,Mi=Mkj)
 
-    digonto_debug = 'y'
+    digonto_debug = 'n'
     if(digonto_debug=='y'):
       print("======================================")
       print("nnp = ",nnp)
