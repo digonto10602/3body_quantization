@@ -1033,7 +1033,7 @@ void test_detF3inv_vs_En_KKpi()
 
         double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.0000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
-        double En_points = 10000;
+        double En_points = 25000;
 
         double delE = abs(En_initial - En_final)/En_points;
 
