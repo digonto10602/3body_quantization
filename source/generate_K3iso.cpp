@@ -19,8 +19,10 @@ void generate_K3iso_L20(    int nPx,
     
     double L = 20;
     double Lbyas = L;
-    double xi = 3.444; /* found from lattice */
-    
+    double xi = 1; 
+    double xi1 = 3.444; /* found from lattice */
+    L = L*xi1; 
+    Lbyas = L; 
 
     double scattering_length_1_piK = 4.04;
     double scattering_length_2_KK = 4.07;

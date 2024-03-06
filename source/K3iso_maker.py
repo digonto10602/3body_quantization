@@ -287,6 +287,9 @@ def P200():
 def jackknifeavg_lattice_data():
     #this drive path has been set from macbook
     drive = "/Users/digonto/GitHub/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    #this drive path is for ubuntu
+    drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    
     filename1 = drive + "KKpi_spectrum.000_A1m"
     filename2 = drive + "KKpi_spectrum.100_A2"
     filename3 = drive + "KKpi_spectrum.110_A2"
@@ -330,7 +333,7 @@ def jackknifeavg_lattice_data():
             Ecm_val_fin = Ecm[i] + err2[i]
             Elab_ini = np.sqrt(Ecmsq_to_Esq(Ecm_val_ini,P))
             Elab_fin = np.sqrt(Ecmsq_to_Esq(Ecm_val_fin,P))
-            Elab = np.linspace(Elab_ini, Elab_fin, 50)
+            Elab = np.linspace(Elab_ini, Elab_fin, 200)
 
             outputfile = "K3iso_jackavg_P" + str(nPx) + str(nPy) + str(nPz) + "_state_" + str(i) + ".dat"
 
@@ -355,6 +358,9 @@ def jackknifeavg_lattice_data():
 def jackknifeavg_centralvalue_lattice_data():
     #this drive path has been set from macbook
     drive = "/Users/digonto/GitHub/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    #this drive path is for ubuntu
+    drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/"
+    
     filename1 = drive + "KKpi_spectrum.000_A1m"
     filename2 = drive + "KKpi_spectrum.100_A2"
     filename3 = drive + "KKpi_spectrum.110_A2"

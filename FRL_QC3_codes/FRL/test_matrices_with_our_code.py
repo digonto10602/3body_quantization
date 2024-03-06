@@ -175,13 +175,14 @@ print("=======================================")
 # Define 2+1 system parameters --- *MUST ALWAYS RESCALE SO THAT M1=1*
 ################################################################################
 #M1, M2 = M12
-M1,M2 = [1.,0.99995]  # The 3-pt. system masses are [M1,M1,M2], e.g. in MeV
-M1,M2 = [1.,M2/M1]  # We always rescale by M1 to make everything dimensionless
+M1,M2 = [0.09698,0.06906]#[1.,0.5]  # The 3-pt. system masses are [M1,M1,M2], e.g. in MeV
+#M1,M2 = [1.,M2/M1]  # We always rescale by M1 to make everything dimensionless
 M12 = [M1,M2]
 parity = -1         # Particle parity (-1 for pseudoscalars)
-L = 5               # Box size (in units of 1/M1)
+xi = 3.444
+L = 20*xi               # Box size (in units of 1/M1)
 nnP = [0,0,1]       # 3-pt. FV spatial momentum (integer-valued)
-Ecm = 3.15              # Total 3-pt. energy in CM frame (in units of M1)
+Ecm = 0.37#2.51              # Total 3-pt. energy in CM frame (in units of M1)
 E = defns.E_to_Ecm(Ecm,L,nnP,rev=True) # Total 3-pt. energy in moving frame (in units of M1)
 #print("E = ",E)
 ################################################################################
@@ -189,10 +190,10 @@ E = defns.E_to_Ecm(Ecm,L,nnP,rev=True) # Total 3-pt. energy in moving frame (in 
 ################################################################################
 waves = 's'  # Partial waves used for dimers with flavor-1 spectators
               # (flavor-2 spectators only use s-wave)
-a_1s = -2   # s-wave scattering length for spectator-flavor-1 channel
+a_1s = 4.04 #-2   # s-wave scattering length for spectator-flavor-1 channel
 r_1s = 0.0    # s-wave effective range for spectator-flavor-1 channel
 a_1p = -2    # p-wave scattering length for spectator-flavor-1 channel
-a_2s = -2    # s-wave scattering length for spectator-flavor-2 channel
+a_2s = 4.07 #-2    # s-wave scattering length for spectator-flavor-2 channel
 ################################################################################
 # Define K2^{-1} phase shift functions
 ################################################################################
@@ -251,13 +252,14 @@ print("F3iso = ",np.sum(F3))
 #Here we make F3 a function of energy E,
 
 threeparticle_threshold =  M1 + M1 + M2
-fiveparticle_threshold = 5.0*M1 
+fiveparticle_threshold = 4.0*M1 
 
 En_initial = defns.E_to_Ecm(threeparticle_threshold,L,nnP,rev=True)
 En_final = defns.E_to_Ecm(fiveparticle_threshold,L,nnP,rev=True)
 En_points = 2000
 del_En = abs(En_initial - En_final)/En_points 
-outfile = "F3_massdependence_FRL_L5.dat"
+nPstring = str(nnP[0]) + str(nnP[1]) + str(nnP[2])
+outfile = "F3_KKpi_FRL_L20_nP"+nPstring+".dat" #"F3_massdependence_FRL_L5.dat"
 f = open(outfile,'w')
 
 for i in range(En_points):

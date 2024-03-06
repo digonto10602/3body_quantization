@@ -940,9 +940,11 @@ void test_detF3inv_vs_En_KKpi()
     
     double L = 20;
     double Lbyas = L;
-    double xi = 3.444; /* found from lattice */
-    
-
+    double xi = 1.0; 
+    double xi1 = 3.444;/* found from lattice */
+    L = L*xi1; // This is done to set the spatial 
+                // unit in terms of a_t everywhere 
+    Lbyas = L; 
     double scattering_length_1_piK = 4.04;
     double scattering_length_2_KK = 4.07;
     double eta_1 = 1.0;
@@ -1004,7 +1006,7 @@ void test_detF3inv_vs_En_KKpi()
         int nPy = nP_config[1][i];
         int nPz = nP_config[2][i];
     
-        std::string filename =    "F3_KKpi_L20_nP_"
+        std::string filename =    "F3_for_pole_KKpi_L20_nP_"
                                 + std::to_string((int)nPx)
                                 + std::to_string((int)nPy)
                                 + std::to_string((int)nPz)
@@ -1027,11 +1029,11 @@ void test_detF3inv_vs_En_KKpi()
         //for nP 100 the first run starts 0.4184939100000000245
         double KKpi_threshold = atmK + atmK + atmpi; 
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
-        double KKKK_threshold = 5.0*atmK; 
+        double KKKK_threshold = 4.2*atmK; 
 
         double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.0000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
-        double En_points = 4000;
+        double En_points = 10000;
 
         double delE = abs(En_initial - En_final)/En_points;
 
@@ -1094,7 +1096,8 @@ void test_detF3inv_vs_En_KKpi()
                     << imag(sumF3inv) << std::endl;
 
             std::cout<<std::setprecision(20);
-            std::cout<< "En = " << En << '\t'
+            std::cout<< "i = " << i << '\t'
+                     << "En = " << En << '\t'
                      << "P = " << nPx << nPy << nPz << '\t' 
                      << "Ecm = " << Ecm_calculated << '\t' 
                      << "detF3 = " << F3_mat.determinant() << '\t'
@@ -2659,8 +2662,8 @@ void test_functions_with_FRL_codebase_2plus1()
     double xi = 1;//3.444; /* found from lattice */
     
 
-    double scattering_length_1_piK = -2;//-4.04;
-    double scattering_length_2_KK =  -2;//-4.07;
+    double scattering_length_1_piK = 4.04;
+    double scattering_length_2_KK =  4.07;
     double eta_1 = 1.0;
     double eta_2 = 0.5;//0.5; 
     double atmpi = 0.5;//0.06906;
@@ -2685,8 +2688,8 @@ void test_functions_with_FRL_codebase_2plus1()
 
     /*---------------------------------------------------*/
 
-    int nPx = 0;
-    int nPy = 0;
+    int nPx = 1;
+    int nPy = 1;
     int nPz = 1; 
 
     comp Px = ((comp)nPx)*twopibyxiLbyas;
@@ -2722,7 +2725,7 @@ void test_functions_with_FRL_codebase_2plus1()
     double En_points = 1000.0;
     double del_En = abs(En_initial - En_final)/En_points; 
 
-    double Ecm = 3.15; 
+    double Ecm = 2.51; 
     comp En = Ecm_to_E(Ecm, total_P);
 
     std::vector<std::vector<comp> > p_config(3, std::vector<comp>()); 
@@ -2757,13 +2760,19 @@ void test_functions_with_FRL_codebase_2plus1()
     std::vector<std::vector<comp> > p_config_by_hand(3, std::vector<comp>()); 
     std::vector<std::vector<comp> > k_config_by_hand(3, std::vector<comp>()); 
 
+    p_config_by_hand = p_config; 
+    k_config_by_hand = k_config; 
 
+    /*
     pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 0); 
-    pvec_by_hand(p_config_by_hand, xi, L, 0, 0, 1);
+    pvec_by_hand(p_config_by_hand, xi, L, 1, 1, 0);
     
     pvec_by_hand(k_config_by_hand, xi, L, 0, 0, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 0, 1, 0);
     pvec_by_hand(k_config_by_hand, xi, L, 1, 0, 0);
-    pvec_by_hand(k_config_by_hand, xi, L,-1, 0, 0);
+    pvec_by_hand(k_config_by_hand, xi, L, 1, 1, 0);
+    */
+    /*pvec_by_hand(k_config_by_hand, xi, L,-1, 0, 0);
     pvec_by_hand(k_config_by_hand, xi, L, 0, 1, 0);
     pvec_by_hand(k_config_by_hand, xi, L, 0,-1, 0);
     pvec_by_hand(k_config_by_hand, xi, L, 0, 0, 1);
@@ -2771,7 +2780,7 @@ void test_functions_with_FRL_codebase_2plus1()
     pvec_by_hand(k_config_by_hand, xi, L,-1, 0, 1);
     pvec_by_hand(k_config_by_hand, xi, L, 0, 1, 1);
     pvec_by_hand(k_config_by_hand, xi, L, 0,-1, 1);
-
+    */
     
     int size1 = p_config_by_hand[0].size(); 
     Eigen::MatrixXcd F2_mat_1(size1,size1);
