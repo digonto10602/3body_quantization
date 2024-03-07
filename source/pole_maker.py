@@ -482,7 +482,7 @@ def jackknifeavg_centralvalue_lattice_data():
 
 #pole_P000()
 
-def pole_finding_by_reading_data_file_P000():
+def pole_finding_by_reading_data_file_F3inv_P000():
     atmpi = 0.06906
     atmK = 0.09698
 
@@ -555,7 +555,7 @@ def pole_finding_by_reading_data_file_P000():
     
     f.close() 
 
-def pole_finding_by_reading_data_file_P100():
+def pole_finding_by_reading_data_file_F3inv_P100():
     atmpi = 0.06906
     atmK = 0.09698
 
@@ -628,7 +628,7 @@ def pole_finding_by_reading_data_file_P100():
     
     f.close() 
 
-def pole_finding_by_reading_data_file_P110():
+def pole_finding_by_reading_data_file_F3inv_P110():
     atmpi = 0.06906
     atmK = 0.09698
 
@@ -701,7 +701,7 @@ def pole_finding_by_reading_data_file_P110():
     
     f.close() 
 
-def pole_finding_by_reading_data_file_P111():
+def pole_finding_by_reading_data_file_F3inv_P111():
     atmpi = 0.06906
     atmK = 0.09698
 
@@ -774,7 +774,7 @@ def pole_finding_by_reading_data_file_P111():
     
     f.close() 
 
-def pole_finding_by_reading_data_file_P200():
+def pole_finding_by_reading_data_file_F3inv_P200():
     atmpi = 0.06906
     atmK = 0.09698
 
@@ -847,13 +847,393 @@ def pole_finding_by_reading_data_file_P200():
     
     f.close() 
 
+def pole_finding_by_reading_data_file_F3_P000():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    statecounter=0
+
+    pole_vec = []
+
+    total_state = 3
+
+    filename1 = "F3_for_pole_KKpi_L20_nP_000.dat"
+
+    (En, EcmR, ReF3det, ImF3det, 
+     ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
+     ResumInvF3, ImsumInvF3) = np.genfromtxt(filename1, unpack=True)
+    
+    pole_vec = []
+    gap_vec = []
+    
+    for i in range(len(EcmR)-1):
+        Ecm_val1 = EcmR[i]
+        E_val1 = En[i]
+        E_val2 = En[i+1]
+        Ecm_val2 = EcmR[i+1]
+        avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+        F3_val1 = ReF3sum[i]
+        F3_val2 = ReF3sum[i+1]
+
+        #print(i,Ecm_val1,F3inv_val1)
+        if(F3_val1<0.0 and F3_val2>0.0):
+            print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+            pole_vec.append(avg_Ecm)
+            gap_vec.append(abs(F3_val1 - F3_val2))
+    
+    #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+    #print(df)
+
+    #sorted_df = df.sort_values(1, ascending=False)
+
+    #f2 = sorted_df.reset_index(drop=True)
+    #print("sorted frame of poles")
+    #print(f2)
+
+    outfile = "Kdf0_spectrum_nP_000_L20.dat"
+    f = open(outfile,'w')
+
+    #we are adding all the poles now
+    #we will correct the spectrum by looking
+    #at the F3iso data
+    for i in range(len(pole_vec)):
+        actual_pole = pole_vec[i]#f2[0][i]
+        print("poles = ",pole_vec[i])#f2[0][i])
+        f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+    f.close() 
+
+def pole_finding_by_reading_data_file_F3_P100():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    statecounter=0
+
+    pole_vec = []
+
+    total_state = 6
+
+    filename1 = "F3_for_pole_KKpi_L20_nP_100.dat"
+
+    (En, EcmR, ReF3det, ImF3det, 
+     ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
+     ResumInvF3, ImsumInvF3) = np.genfromtxt(filename1, unpack=True)
+    
+    pole_vec = []
+    gap_vec = []
+    
+    for i in range(len(EcmR)-1):
+        Ecm_val1 = EcmR[i]
+        E_val1 = En[i]
+        E_val2 = En[i+1]
+        Ecm_val2 = EcmR[i+1]
+        avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+        F3_val1 = ReF3sum[i]
+        F3_val2 = ReF3sum[i+1]
+
+        #print(i,Ecm_val1,F3inv_val1)
+        if(F3_val1<0.0 and F3_val2>0.0):
+            print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+            pole_vec.append(avg_Ecm)
+            gap_vec.append(abs(F3_val1 - F3_val2))
+    
+    #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+    #print(df)
+
+    #sorted_df = df.sort_values(1, ascending=False)
+
+    #f2 = sorted_df.reset_index(drop=True)
+    #print("sorted frame of poles")
+    #print(f2)
+
+    outfile = "Kdf0_spectrum_nP_100_L20.dat"
+    f = open(outfile,'w')
+
+    #we are adding all the poles now
+    #we will correct the spectrum by looking
+    #at the F3iso data
+    for i in range(len(pole_vec)):
+        actual_pole = pole_vec[i]#f2[0][i]
+        print("poles = ",pole_vec[i])#f2[0][i])
+        f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+    f.close() 
+
+def pole_finding_by_reading_data_file_F3_P110():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    statecounter=0
+
+    pole_vec = []
+
+    total_state = 6
+
+    filename1 = "F3_for_pole_KKpi_L20_nP_110.dat"
+
+    (En, EcmR, ReF3det, ImF3det, 
+     ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
+     ResumInvF3, ImsumInvF3) = np.genfromtxt(filename1, unpack=True)
+    
+    pole_vec = []
+    gap_vec = []
+    
+    for i in range(len(EcmR)-1):
+        Ecm_val1 = EcmR[i]
+        E_val1 = En[i]
+        E_val2 = En[i+1]
+        Ecm_val2 = EcmR[i+1]
+        avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+        F3_val1 = ReF3sum[i]
+        F3_val2 = ReF3sum[i+1]
+
+        #print(i,Ecm_val1,F3inv_val1)
+        if(F3_val1<0.0 and F3_val2>0.0):
+            print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+            pole_vec.append(avg_Ecm)
+            gap_vec.append(abs(F3_val1 - F3_val2))
+    
+    #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+    #print(df)
+
+    #sorted_df = df.sort_values(1, ascending=False)
+
+    #f2 = sorted_df.reset_index(drop=True)
+    #print("sorted frame of poles")
+    #print(f2)
+
+    outfile = "Kdf0_spectrum_nP_110_L20.dat"
+    f = open(outfile,'w')
+
+    #we are adding all the poles now
+    #we will correct the spectrum by looking
+    #at the F3iso data
+    for i in range(len(pole_vec)):
+        actual_pole = pole_vec[i]#f2[0][i]
+        print("poles = ",pole_vec[i])#f2[0][i])
+        f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+    f.close() 
+
+def pole_finding_by_reading_data_file_F3_P111():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    statecounter=0
+
+    pole_vec = []
+
+    total_state = 6
+
+    filename1 = "F3_for_pole_KKpi_L20_nP_111.dat"
+
+    (En, EcmR, ReF3det, ImF3det, 
+     ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
+     ResumInvF3, ImsumInvF3) = np.genfromtxt(filename1, unpack=True)
+    
+    pole_vec = []
+    gap_vec = []
+    
+    for i in range(len(EcmR)-1):
+        Ecm_val1 = EcmR[i]
+        E_val1 = En[i]
+        E_val2 = En[i+1]
+        Ecm_val2 = EcmR[i+1]
+        avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+        F3_val1 = ReF3sum[i]
+        F3_val2 = ReF3sum[i+1]
+
+        #print(i,Ecm_val1,F3inv_val1)
+        if(F3_val1<0.0 and F3_val2>0.0):
+            print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+            pole_vec.append(avg_Ecm)
+            gap_vec.append(abs(F3_val1 - F3_val2))
+    
+    #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+    #print(df)
+
+    #sorted_df = df.sort_values(1, ascending=False)
+
+    #f2 = sorted_df.reset_index(drop=True)
+    #print("sorted frame of poles")
+    #print(f2)
+
+    outfile = "Kdf0_spectrum_nP_111_L20.dat"
+    f = open(outfile,'w')
+
+    #we are adding all the poles now
+    #we will correct the spectrum by looking
+    #at the F3iso data
+    for i in range(len(pole_vec)):
+        actual_pole = pole_vec[i]#f2[0][i]
+        print("poles = ",pole_vec[i])#f2[0][i])
+        f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+    f.close() 
+
+def pole_finding_by_reading_data_file_F3_P200():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    statecounter=0
+
+    pole_vec = []
+
+    total_state = 7
+
+    filename1 = "F3_for_pole_KKpi_L20_nP_200.dat"
+
+    (En, EcmR, ReF3det, ImF3det, 
+     ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
+     ResumInvF3, ImsumInvF3) = np.genfromtxt(filename1, unpack=True)
+    
+    pole_vec = []
+    gap_vec = []
+    
+    for i in range(len(EcmR)-1):
+        Ecm_val1 = EcmR[i]
+        E_val1 = En[i]
+        E_val2 = En[i+1]
+        Ecm_val2 = EcmR[i+1]
+        avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+        F3_val1 = ReF3sum[i]
+        F3_val2 = ReF3sum[i+1]
+
+        #print(i,Ecm_val1,F3inv_val1)
+        if(F3_val1<0.0 and F3_val2>0.0):
+            print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+            pole_vec.append(avg_Ecm)
+            gap_vec.append(abs(F3_val1 - F3_val2))
+    
+    #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+    #print(df)
+
+    #sorted_df = df.sort_values(1, ascending=False)
+
+    #f2 = sorted_df.reset_index(drop=True)
+    #print("sorted frame of poles")
+    #print(f2)
+
+    outfile = "Kdf0_spectrum_nP_200_L20.dat"
+    f = open(outfile,'w')
+
+    #we are adding all the poles now
+    #we will correct the spectrum by looking
+    #at the F3iso data
+    for i in range(len(pole_vec)):
+        actual_pole = pole_vec[i]#f2[0][i]
+        print("poles = ",pole_vec[i])#f2[0][i])
+        f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+    f.close() 
 
 
-pole_finding_by_reading_data_file_P000()
-pole_finding_by_reading_data_file_P100()
-pole_finding_by_reading_data_file_P110()
-pole_finding_by_reading_data_file_P111()
-pole_finding_by_reading_data_file_P200()
+
+pole_finding_by_reading_data_file_F3_P000()
+pole_finding_by_reading_data_file_F3_P100()
+pole_finding_by_reading_data_file_F3_P110()
+pole_finding_by_reading_data_file_F3_P111()
+pole_finding_by_reading_data_file_F3_P200()
 ############################### TEST ############################################
 
 #################################################################################

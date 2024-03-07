@@ -1029,11 +1029,11 @@ void test_detF3inv_vs_En_KKpi()
         //for nP 100 the first run starts 0.4184939100000000245
         double KKpi_threshold = atmK + atmK + atmpi; 
         double KKpipi_threshold = 2.0*atmK + 2.0*atmpi; 
-        double KKKK_threshold = 4.2*atmK; 
+        double KKKK_threshold = 5.0*atmK; 
 
         double En_initial = std::sqrt(KKpi_threshold*KKpi_threshold + 0.0000001 + abs(total_P_val*total_P_val));//.27;//0.4184939100000000245;//0.26302;
         double En_final = std::sqrt(KKKK_threshold*KKKK_threshold + abs(total_P_val*total_P_val));;
-        double En_points = 25000;
+        double En_points = 50000;
 
         double delE = abs(En_initial - En_final)/En_points;
 
@@ -2938,6 +2938,8 @@ int main()
     //test_functions_with_FRL_codebase_ID();
 
     //test_functions_with_FRL_codebase_2plus1();
+
+    
     
     return 0;
 }

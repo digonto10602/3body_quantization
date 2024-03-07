@@ -333,7 +333,7 @@ def jackknifeavg_lattice_data():
             Ecm_val_fin = Ecm[i] + err2[i]
             Elab_ini = np.sqrt(Ecmsq_to_Esq(Ecm_val_ini,P))
             Elab_fin = np.sqrt(Ecmsq_to_Esq(Ecm_val_fin,P))
-            Elab = np.linspace(Elab_ini, Elab_fin, 200)
+            Elab = np.linspace(Elab_ini, Elab_fin, 500)
 
             outputfile = "K3iso_jackavg_P" + str(nPx) + str(nPy) + str(nPz) + "_state_" + str(i) + ".dat"
 
