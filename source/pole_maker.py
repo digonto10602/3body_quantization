@@ -875,7 +875,7 @@ def pole_finding_by_reading_data_file_F3_P000():
 
     total_state = 3
 
-    filename1 = "F3_for_pole_KKpi_L20_nP_000.dat"
+    filename1 = "F3_for_pole_KKpi_L20_nP_000_1.dat"
 
     (En, EcmR, ReF3det, ImF3det, 
      ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
@@ -951,7 +951,7 @@ def pole_finding_by_reading_data_file_F3_P100():
 
     total_state = 6
 
-    filename1 = "F3_for_pole_KKpi_L20_nP_100.dat"
+    filename1 = "F3_for_pole_KKpi_L20_nP_100_1.dat"
 
     (En, EcmR, ReF3det, ImF3det, 
      ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
@@ -1027,7 +1027,7 @@ def pole_finding_by_reading_data_file_F3_P110():
 
     total_state = 6
 
-    filename1 = "F3_for_pole_KKpi_L20_nP_110.dat"
+    filename1 = "F3_for_pole_KKpi_L20_nP_110_1.dat"
 
     (En, EcmR, ReF3det, ImF3det, 
      ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
@@ -1103,7 +1103,7 @@ def pole_finding_by_reading_data_file_F3_P111():
 
     total_state = 6
 
-    filename1 = "F3_for_pole_KKpi_L20_nP_111.dat"
+    filename1 = "F3_for_pole_KKpi_L20_nP_111_1.dat"
 
     (En, EcmR, ReF3det, ImF3det, 
      ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,
@@ -1179,7 +1179,7 @@ def pole_finding_by_reading_data_file_F3_P200():
 
     total_state = 7
 
-    filename1 = "F3_for_pole_KKpi_L20_nP_200.dat"
+    filename1 = "F3_for_pole_KKpi_L20_nP_200_1.dat"
 
     (En, EcmR, ReF3det, ImF3det, 
      ReF3sum, ImF3sum, RedetInvF3, ImdetInvF3,

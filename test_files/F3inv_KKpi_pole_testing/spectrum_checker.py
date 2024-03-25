@@ -74,11 +74,11 @@ plt.rc('text', usetex=True)
 drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3inv_KKpi_pole_testing/"
 
 testfile_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/"
-filename1 = drive + "F3_for_pole_KKpi_L20_nP_000.dat"
-filename2 = drive + "F3_for_pole_KKpi_L20_nP_100.dat"
-filename3 = drive + "F3_for_pole_KKpi_L20_nP_110.dat"
-filename4 = drive + "F3_for_pole_KKpi_L20_nP_111.dat"
-filename5 = drive + "F3_for_pole_KKpi_L20_nP_200.dat"
+filename1 = drive + "F3_for_pole_KKpi_L20_nP_000_1.dat"
+filename2 = drive + "F3_for_pole_KKpi_L20_nP_100_1.dat"
+filename3 = drive + "F3_for_pole_KKpi_L20_nP_110_1.dat"
+filename4 = drive + "F3_for_pole_KKpi_L20_nP_111_1.dat"
+filename5 = drive + "F3_for_pole_KKpi_L20_nP_200_1.dat"
 
 spectrum1 = testfile_drive + "non_int_3body_nP000.dat"
 spectrum2 = testfile_drive + "non_int_3body_nP100.dat"
