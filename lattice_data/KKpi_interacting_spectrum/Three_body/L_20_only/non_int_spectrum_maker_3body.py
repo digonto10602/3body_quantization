@@ -583,7 +583,7 @@ print(irrep_list)
 atmk = 0.09698
 atmpi = 0.06906
 xi = 3.444
-max_nsq = 4
+max_nsq = 20
 Lmin = 16
 Lmax = 24
 Lpoints = 2000 

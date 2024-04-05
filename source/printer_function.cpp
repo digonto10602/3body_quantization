@@ -2471,7 +2471,7 @@ void test_3body_non_int()
     
     double L = 20;
     double Lbyas = L;
-    double xi = 3.449;//3.444; /* found from lattice */
+    double xi = 3.444; /* found from lattice */
     int nmax = 20; 
     int nsq_max = 4;
     

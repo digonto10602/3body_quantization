@@ -211,6 +211,7 @@ f_qcot_s_2.append(f_qcot_2s)
 nnk_list_1 = defns.list_nnk_nnP(E,L,nnP, Mijk=[M1,M1,M2])
 nnk_list_2 = defns.list_nnk_nnP(E,L,nnP, Mijk=[M2,M1,M1])
 print("nnk_list_1 = ",nnk_list_1)
+print("nnk size = ",len(nnk_list_1))
 print("nnk_list_2 = ",nnk_list_2)
 nnk_list_12 = [nnk_list_1, nnk_list_2]
 F3 = F3_mat.F3mat_2plus1(E,L,nnP, f_qcot_1sp1, f_qcot_2s, M12=M12, waves='s',nnk_lists_12=nnk_list_12)
@@ -251,15 +252,15 @@ print("F3iso = ",np.sum(F3))
 
 #Here we make F3 a function of energy E,
 
-threeparticle_threshold =  M1 + M1 + M2
-fiveparticle_threshold = 4.0*M1 
+threeparticle_threshold =  0.375#M1 + M1 + M2
+fiveparticle_threshold = 0.387#4.0*M1 
 
 En_initial = defns.E_to_Ecm(threeparticle_threshold,L,nnP,rev=True)
 En_final = defns.E_to_Ecm(fiveparticle_threshold,L,nnP,rev=True)
-En_points = 2000
+En_points = 100
 del_En = abs(En_initial - En_final)/En_points 
 nPstring = str(nnP[0]) + str(nnP[1]) + str(nnP[2])
-outfile = "F3_KKpi_FRL_L20_nP"+nPstring+".dat" #"F3_massdependence_FRL_L5.dat"
+outfile = "no_nonint_check_F3_KKpi_FRL_L20_nP"+nPstring+".dat" #"F3_massdependence_FRL_L5.dat"
 f = open(outfile,'w')
 
 for i in range(En_points):
@@ -272,7 +273,16 @@ for i in range(En_points):
   #print("nnk_list_2 = ",nnk_list_2)
   nnk_list_12 = [nnk_list_1, nnk_list_2]
   F3 = F3_mat.F3mat_2plus1(En,L,nnP, f_qcot_1sp1, f_qcot_2s, M12=M12, waves='s',nnk_lists_12=nnk_list_12)
-  F3sum = np.sum(F3)
+  state_vec = np.zeros(len(nnk_list_1) + len(nnk_list_2))
+  state_vec_counter = 0
+  for j in range(len(nnk_list_1)):
+    state_vec[j] = 1.0
+    state_vec_counter = state_vec_counter + 1 
+  for j in range(state_vec_counter, len(nnk_list_1)+len(nnk_list_2),1):
+    state_vec[j] = 1.0/np.sqrt(2.0)
+
+  state_vecT = np.transpose(state_vec)
+  F3sum = state_vecT @ F3 @ state_vec #np.sum(F3)
   f.write(  str(En) + '\t'
           + str(Ecm) + '\t'
           + str(F3sum) + '\n')
