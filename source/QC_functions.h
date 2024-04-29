@@ -1042,6 +1042,243 @@ void test_F3iso_ND_2plus1_mat_with_normalization( Eigen::MatrixXcd &F3mat,
 }
 
 
+//This one has a variable strength alpha multiplied to 
+//K^{-1} term in F3, if twobody_alpha is large means weak 
+//two body strength and small means larger twobody strength 
+
+void test_F3iso_ND_2plus1_mat_with_normalization_twobody_var_strength_alpha( 
+                            Eigen::MatrixXcd &F3mat,
+                            Eigen::VectorXcd &state_vec, 
+                            Eigen::MatrixXcd &F2mat,
+                            Eigen::MatrixXcd &K2imat,
+                            Eigen::MatrixXcd &Gmat, 
+                            Eigen::MatrixXcd &Hmatinv, 
+                            comp En, 
+                            std::vector< std::vector<comp> > p_config,
+                            std::vector< std::vector<comp> > k_config, 
+                            std::vector<comp> total_P, 
+                            double eta_i_1,
+                            double eta_i_2, 
+                            double scattering_length_1,
+                            double scattering_length_2,  
+                            double m_pi,
+                            double m_K, 
+                            double twobody_alpha,  
+                            double alpha, 
+                            double epsilon_h, 
+                            double L, 
+                            double xi, 
+                            int max_shell_num   )
+{
+    int size = p_config[0].size();
+
+    int size1=0, size2=0;
+    
+    
+    //Eigen::MatrixXcd K2_mat_1(size,size);
+    //Eigen::MatrixXcd K2_mat_2(size,size);
+    //Eigen::MatrixXcd K2_mat(2*size,2*size);
+    
+    
+
+    //for i = 1 
+    double mi = m_K; 
+    double mj = m_K; 
+    double mk = m_pi; 
+
+    std::vector< std::vector<comp> > p_config1(3,std::vector<comp> ());
+    double config_tolerance = 1.0e-5;
+
+    config_maker_1(p_config1, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+    //std::cout<<"size1 in QC = "<<size1<<std::endl;
+    
+    std::vector< std::vector<comp> > k_config1 = p_config1;
+
+    size1 = p_config1[0].size(); 
+    Eigen::MatrixXcd F2_mat_1(size1,size1);
+    Eigen::MatrixXcd K2inv_mat_1(size1,size1);
+    //F2_i_mat( F2_mat_1, En, p_config1, k_config1, total_P, mi, mj, mk, L, alpha, epsilon_h, max_shell_num );
+    F2_i_mat_1( F2_mat_1, En, p_config1, k_config1, total_P, mi, mj, mk, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    K2inv_i_mat( K2inv_mat_1, eta_i_1, scattering_length_1, En, p_config1, k_config1, total_P, mi, mj, mk, epsilon_h, L );
+    //K2_mat_1 = K2inv_mat_1.inverse();
+    
+    //for i = 2 
+    mi = m_pi; 
+    mj = m_K; 
+    mk = m_K; 
+
+    std::vector< std::vector<comp> > p_config2(3,std::vector<comp> ());
+    config_maker_1(p_config2, En, total_P, mi, mj, mk, L, xi, epsilon_h, config_tolerance );
+    std::vector< std::vector<comp> > k_config2 = p_config2;
+
+     
+
+    size2 = p_config2[0].size(); 
+    //std::cout<<size2<<std::endl; 
+    Eigen::MatrixXcd F2_mat_2(size2,size2);
+    Eigen::MatrixXcd K2inv_mat_2(size2,size2);
+
+    //std::cout << "spec 1 size = " << size1 << '\t' << "spec 2 size = " << size2 << std::endl; 
+    
+    
+    //F2_i_mat( F2_mat_2, En, p_config2, k_config2, total_P, mi, mj, mk, L, alpha, epsilon_h, max_shell_num );
+    F2_i_mat_1( F2_mat_2, En, p_config2, k_config2, total_P, mi, mj, mk, L, xi, alpha, epsilon_h, max_shell_num );
+    
+    K2inv_i_mat( K2inv_mat_2, eta_i_2, scattering_length_2, En, p_config2, k_config2, total_P, mi, mj, mk, epsilon_h, L );
+    //K2_mat_2 = K2inv_mat_2.inverse();
+    char debug1 = 'n';
+    if(debug1=='y')
+    {
+        std::cout << "spec 1 size = " << std::endl;
+        std::cout << p_config1[0].size()<< std::endl; 
+        std::cout << "========================" << std::endl;
+        std::cout << "spec 2 size = " << std::endl; 
+        std::cout << p_config2[0].size() << std::endl;
+        std::cout << "========================" << std::endl; 
+        std::cout << "F2 mat 1 = " << std::endl; 
+        std::cout << F2_mat_1 << std::endl; 
+        std::cout << "========================" << std::endl; 
+        std::cout << "F2 mat 2 = " << std::endl; 
+        std::cout << F2_mat_2 << std::endl; 
+        std::cout << "========================" << std::endl;
+    }
+    //for (i,j) = 1 1 and k = 2 
+    mi = m_K; 
+    mj = m_K; 
+    mk = m_pi; 
+    Eigen::MatrixXcd G_mat_11(size1,size1);
+    G_ij_mat( G_mat_11, En, p_config1, k_config1, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    //for (i,j) = 1 2 and k = 1 
+    mi = m_K; 
+    mj = m_pi; 
+    mk = m_K; 
+
+    Eigen::MatrixXcd G_mat_12(size1,size2);
+    G_ij_mat( G_mat_12, En, p_config1, k_config2, total_P, mi, mj, mk, L, epsilon_h ); 
+
+    //for (i,j) = 2 1 and k = 1 
+    mi = m_pi; 
+    mj = m_K; 
+    mk = m_K; 
+
+    Eigen::MatrixXcd G_mat_21(size2,size1);
+    G_ij_mat( G_mat_21, En, p_config2, k_config1, total_P, mi, mj, mk, L, epsilon_h ); 
+    
+
+    Eigen::MatrixXcd F2_mat(size1 + size2,size1 + size2);
+
+    Eigen::MatrixXcd Filler0_12(size1,size2);
+    Eigen::MatrixXcd Filler0_21(size2,size1);
+    Eigen::MatrixXcd Filler0_22(size2,size2);
+
+    Filler0_12 = Eigen::MatrixXcd::Zero(size1,size2);
+    Filler0_21 = Eigen::MatrixXcd::Zero(size2,size1);
+    Filler0_22 = Eigen::MatrixXcd::Zero(size2,size2);
+    
+    F2_mat <<   F2_mat_1,   Filler0_12,
+                Filler0_21, F2_mat_2; 
+
+    //F2_mat.topLeftCorner(size1,size1) = F2_mat_1;
+    //F2_mat.topRightCorner(size1,size2) = Eigen::MatrixXcd::Zero(size2,size1);
+    //F2_mat.bottomLeftCorner(size2,size1) = Eigen::MatrixXcd::Zero(size1,size2);
+    //F2_mat.bottomRightCorner(size2,size2) = F2_mat_2;
+    //K2_mat <<   K2_mat_1,                   Eigen::MatrixXcd::Zero(size,size),
+    //            Eigen::MatrixXcd::Zero(size,size), 0.5*K2_mat_2;
+
+    //F2_mat_builder(F2_mat,F2_mat_1, F2_mat_2, size1, size2);
+    
+    //std::cout<<"F2mat = "<<'\n'<<F2_mat<<std::endl;
+
+    Eigen::MatrixXcd K2inv_mat(size1 + size2,size1 + size2);
+
+    K2inv_mat   <<  K2inv_mat_1, Filler0_12,
+                    Filler0_21,  2.0*K2inv_mat_2;
+
+    K2inv_mat = twobody_alpha*K2inv_mat; 
+    
+    Eigen::MatrixXcd G_mat(size1 + size2,size1 + size2);
+
+    G_mat_12 = std::sqrt(2.0)*G_mat_12;
+    G_mat_21 = std::sqrt(2.0)*G_mat_21;
+
+    G_mat  <<   G_mat_11, G_mat_12,
+                G_mat_21, Filler0_22;
+
+
+    Eigen::MatrixXcd temp_identity_mat(size1 + size2,size1 + size2);
+    temp_identity_mat.setIdentity();
+
+    Eigen::MatrixXcd H_mat = K2inv_mat + F2_mat + G_mat; 
+    //H_mat = H_mat*10000;
+    Eigen::MatrixXcd H_mat_inv(size1 + size2,size1 + size2);
+    double relerror = 0.0;
+
+    //LinearSolver_3(H_mat, H_mat_inv, temp_identity_mat, relerror);
+    LinearSolver_4(H_mat, H_mat_inv, temp_identity_mat, relerror);
+
+    //std::cout << "Identity = " << temp_identity_mat << std::endl;
+    //H_mat_inv = H_mat_inv/10000;
+
+    //F3mat = F2_mat/3.0 - F2_mat*H_mat_inv*F2_mat;
+    //Eigen::MatrixXcd temp_F3_mat(size,size);
+    //Eigen::MatrixXcd temp_mat_A(size,size);
+    //temp_mat_A = H_mat_inv*F2_mat;//H_mat.inverse()*F2_mat;
+    //temp_F3_mat = F2_mat*temp_mat_A;
+    
+    //F3mat = (F2_mat/3.0 - F2_mat*H_mat.inverse()*F2_mat);//temp_F3_mat;
+
+    F3mat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    F3mat = (F2_mat/3.0 - F2_mat*H_mat_inv*F2_mat);//temp_F3_mat; 
+
+    F2mat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    K2imat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    Gmat = Eigen::MatrixXcd(size1+size2, size1+size2); 
+    Hmatinv = Eigen::MatrixXcd(size1+size2, size1+size2); 
+
+    Gmat = G_mat; 
+    F2mat = F2_mat; 
+    K2imat = K2inv_mat; 
+    Hmatinv = H_mat_inv; 
+
+    int eigvec_counter = 0; 
+    Eigen::VectorXcd EigVec(size1 + size2); 
+    for(int i=0;i<size1;++i)
+    {
+        EigVec(i) = 1.0;
+        eigvec_counter += 1; 
+    }
+    for(int i=eigvec_counter ;i<(size1+size2); ++i)
+    {
+        EigVec(i) = 1.0/std::sqrt(2.0); 
+    }
+    
+    //F3iso = EigVec.transpose()*F3mat*EigVec; 
+
+    state_vec = Eigen::VectorXcd(size1+size2); 
+
+    state_vec = EigVec; 
+    
+    char debug = 'n';
+    if(debug=='y')
+    {
+        std::cout << "F2 mat = " << std::endl;
+        std::cout << F2_mat<< std::endl; 
+        std::cout << "========================" << std::endl;
+        std::cout << "G mat = " << std::endl; 
+        std::cout << G_mat << std::endl;
+        std::cout << "========================" << std::endl; 
+        std::cout << "K2inv mat = " << std::endl; 
+        std::cout << K2inv_mat << std::endl; 
+        std::cout << "========================" << std::endl; 
+        std::cout << "F3 mat = " << std::endl; 
+        std::cout << F3mat << std::endl; 
+        std::cout << "========================" << std::endl;
+    }
+}
+
+
 
 /* Here is the determinant of F3_inv, this if for testing 
 the free levels vs L to check if they match with our previous 
