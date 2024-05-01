@@ -4,6 +4,8 @@ F3inv, should be used with pole_maker.py file
 This uses  the following input */
 /* ./generate_pole nPx nPy nPz en_guess1 en_guess2 max_iteration */
 
+// This Code DID NOT SUCCESSFULLY RAN to give out the poles 
+
 #include "F2_functions.h"
 #include "K2_functions.h"
 #include "G_functions.h"

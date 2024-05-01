@@ -7,6 +7,7 @@
 #include "QC_functions.h"
 #include "pole_searching.h"
 #include "omp.h"
+#include "splines.h"
 
 
 void test_F3_vs_En_KKpi_omp()
@@ -1583,7 +1584,7 @@ void test_F3inv_with_splines()
 
     /*---------------------------------------------------*/
 
-    int nPx = 0;//nP_config[0][ind1];
+    int nPx = 2;//nP_config[0][ind1];
     int nPy = 0;//nP_config[1][ind1];
     int nPz = 0;//nP_config[2][ind1];
     
@@ -1601,7 +1602,7 @@ void test_F3inv_with_splines()
     // Reading F3 files for data
     // and F3inv poles files for the poles 
     std::ifstream fin; 
-    std::string drive = "./test_files//F3_for_pole_KKpi_L20/";
+    std::string drive = "./test_files/F3_for_pole_KKpi_L20/";
     std::string filename = drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_"
                             + std::to_string(nPx)
                             + std::to_string(nPy) 
@@ -1646,16 +1647,16 @@ void test_F3inv_with_splines()
     
     //Build splines between the first two pole interval 
 
-    double eps1 = 0.000023;
-    double pole1 = F3inv_pole_vec[0] + eps1;
-    double pole2 = F3inv_pole_vec[1] - eps1;
+    double eps1 = 0.00000023;
+    double pole1 = F3inv_pole_vec[2] + eps1;
+    double pole2 = F3inv_pole_vec[3] - eps1;
 
     std::cout<<"pole1 = "<<pole1<<std::endl; 
     std::cout<<"pole2 = "<<pole2<<std::endl; 
 
     std::vector<double> selected_Ecm; 
     std::vector<double> selected_F3inv; 
-    for(int i=0;i<selected_F3inv.size();++i)
+    for(int i=0;i<f1_F3inv_vec.size();++i)
     {
         if(f1_Ecm_vec[i]>pole1 && f1_Ecm_vec[i]<pole2)
         {
@@ -1666,10 +1667,23 @@ void test_F3inv_with_splines()
 
     int spline_size = 50;
     int F3inv_vec_size = selected_F3inv.size(); 
-
+    std::cout<<"f1_F3inv_vec size = "<<f1_F3inv_vec.size()<<std::endl;
+    std::cout<<"selected F3 size = "<<F3inv_vec_size<<std::endl; 
     if(F3inv_vec_size<spline_size) spline_size = F3inv_vec_size; 
 
-    std::random_device rd; 
+    int initial_point = 0;
+    int final_point = F3inv_vec_size; 
+    int del_point = abs(final_point - initial_point)/spline_size; 
+
+    std::vector<int> index_vec; 
+    for(int i=0;i<spline_size; ++i)
+    {
+        int ind = initial_point + i*del_point; 
+        index_vec.push_back(ind); 
+    }
+
+    // Here we wanted to choose 50 random points, didn't work out
+    /*std::random_device rd; 
     std::mt19937 mt_eng(rd()); 
     const int range_min = 0; 
     const int range_max = F3inv_vec_size;
@@ -1687,19 +1701,55 @@ void test_F3inv_with_splines()
 
         if(random_index_vec.size()==spline_size) break; 
     }
+    */
 
-    for(int i=0;i<random_index_vec.size();++i)
+    //These two are selected for spline code 
+    std::vector<double> xj_vec;
+    std::vector<double> fj_vec; 
+    for(int i=0;i<index_vec.size();++i)
     {
-        std::cout<<random_index_vec[i]<<'\t'
-                 <<i<<'\t'
-                 <<selected_Ecm[random_index_vec[i]]<<std::endl; 
-    }
+        xj_vec.push_back(selected_Ecm[index_vec[i]]);
+        fj_vec.push_back(selected_F3inv[index_vec[i]]);
 
-    std::abort(); 
+        std::cout<<"ind = "<<index_vec[i]<<'\t'
+                 <<"i = "<<i<<'\t'
+                 <<"Ecm = "<<selected_Ecm[index_vec[i]]<<'\t'
+                 <<"F3inv = "<<selected_F3inv[index_vec[i]]<<std::endl; 
+    }
+    
 
     double random_Ecm = (pole1+pole2)/2.0; 
     double random_En = real(Ecm_to_E(random_Ecm,total_P)); 
 
+    int size = xj_vec.size(); 
+    std::vector<std::vector<double> > Sij_vec1(size, std::vector<double> (size)); 
+    Sij_builder(random_Ecm, xj_vec, Sij_vec1);
+
+    double xval = random_Ecm; 
+    int j_val = 0; 
+    for(int j=0; j<xj_vec.size()-1; ++j)
+    {
+        double xj_check1 = xj_vec[j];
+        double xj_check2 = xj_vec[j+1]; 
+
+        if(xval>=xj_check1 && xval<=xj_check2)
+        {
+            j_val = j; 
+        }
+    }
+
+    double f_spline_val = 0.0; 
+
+    for(int k=0; k<xj_vec.size(); ++k)
+    {
+        f_spline_val = f_spline_val + Sij_vec1[k][j_val]*fj_vec[k];
+    }
+    std::cout<<std::setprecision(20); 
+    std::cout<<"Ecm = "<<random_Ecm<<std::endl; 
+    std::cout<<"En = "<<random_En<<std::endl; 
+    std::cout<<"F3inv from spline = "<<f_spline_val<<std::endl;
+
+    //std::abort(); 
 
     double En = random_En; 
     double mi = atmK;
@@ -1727,6 +1777,10 @@ void test_F3inv_with_splines()
 
     comp norm1 = state_vec.transpose()*state_vec; 
     double norm2 = real(norm1); 
+
+    std::cout<<"actual F3inv = "<<1.0/F3iso<<std::endl; 
+    double percent_error = std::abs((real(1.0/F3iso) - f_spline_val)/real(1.0/F3iso))*100.0; 
+    std::cout<<"percent error = "<<percent_error<<std::endl;
             
                  
 }
