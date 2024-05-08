@@ -12,8 +12,23 @@ import subprocess
 import math 
 import sys 
 
+threebody_path_ubuntu = '/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/'
+threebody_path_macos = '/Users/digonto/GitHub/3body_quantization/'
+macos_path2 = '/Users/digonto/GitHub/jackknife_codes/'
+ubuntu_path2 = '/home/digonto/Codes/Practical_Lattice_v2/jackknife_codes/'
 
-sys.path.insert(1, '/home/digonto/Codes/Practical_Lattice_v2/jackknife_codes/')
+from sys import platform 
+#print(platform)
+if platform=="linux" or platform=="linux2":
+    print("platform = ",platform)
+    jackpath = ubuntu_path2
+    threebody_path = threebody_path_ubuntu
+elif platform=="darwin":
+    print("platform = ",platform)
+    jackpath = macos_path2
+    threebody_path = threebody_path_macos
+
+sys.path.insert(1, jackpath)
 
 import jackknife 
 from lattice_data_covariance import covariance_between_states_L20
@@ -378,12 +393,13 @@ def test1():
 
 
 #This was done to test the spline based code
+#Check spectrum for given K3df values 
 def spectrum_checker_for_QC():
     nPx = 0
     nPy = 0
     nPz = 0 
 
-    F3_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3_for_pole_KKpi_L20/"
+    F3_drive = threebody_path + "test_files/F3_for_pole_KKpi_L20/"
     F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
     
     (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
@@ -391,19 +407,20 @@ def spectrum_checker_for_QC():
     for i in range(len(F3)):
         F3inv[i] = 1.0/F3[i]
 
-    F3inv_poles_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3inv_poles_L20/"    
+    F3inv_poles_drive = threebody_path + "test_files/F3inv_poles_L20/"    
     F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
     
     (L1, F3inv_poles) = np.genfromtxt(F3inv_poles_file, unpack=True)
 
-    spectrum_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/lattice_data/KKpi_interacting_spectrum/Three_body/L_20_only/"
+    
+    spectrum_drive = threebody_path + "lattice_data/KKpi_interacting_spectrum/Three_body/L_20_only/"
     spectrum_filename = spectrum_drive + "KKpi_spectrum.P_" + str(nPx) + str(nPy) + str(nPz) + "_usethisfile"
 
     (L2, Elatt_CM, Elatt_CM_stat, Elatt_CM_sys) = np.genfromtxt(spectrum_filename, unpack=True)
 
 
-    K3iso1 =  1336082.36755021
-    K3iso2 =  -10866109.92757
+    K3iso1 =  -4.45893908e+07  #1336082.36755021
+    K3iso2 =  4.94547308e+08 #-10866109.92757
 
     QC_val = []
     for i in range(len(F3inv)):
@@ -438,7 +455,7 @@ def spectrum_checker_for_QC():
 
     fig, ax = plt.subplots(figsize=(12,5))
 
-    ax.set_ylim(-1E7,1E7)
+    ax.set_ylim(-1E8,1E8)
     ax.set_xlim(0.26,0.37)
     ax.plot(Ecm1,np_QC_val)
     #ax.plot(Ecm_space,np_QC_val_spline)
@@ -449,5 +466,5 @@ def spectrum_checker_for_QC():
     plt.show()
 
 #test() 
-test1()
-#spectrum_checker_for_QC()
+#test1()
+spectrum_checker_for_QC()
