@@ -9,6 +9,14 @@ from PyPDF2 import PdfMerger
 
 import os 
 import subprocess 
+import math 
+import sys 
+
+
+sys.path.insert(1, '/home/digonto/Codes/Practical_Lattice_v2/jackknife_codes/')
+
+import jackknife 
+from lattice_data_covariance import covariance_between_states_L20
 
 def E_to_Ecm(En, P):
     return np.sqrt(En**2 - P**2)
@@ -206,6 +214,95 @@ def K3iso_fitting_function(x0, nPx, nPy, nPz, nmax, tol, spline_size, corr_mat_i
     return chisquare 
 
 
+#this is based on the jackknife and lattice_data_covariance code in the 
+#jackknife_codes repository, this will be supplied a list of spectrum 
+#with frame momenta P as [nPx, nPy, nPz], state number [0,1,2,0,1,..] along with their corresponding 
+#covariance matrices to perform the fitting, this is much more robust than 
+#the previous fitting function which was built for checking a single frame spectrum 
+def K3iso_fitting_function_all_moms(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
+    energy_eps = 1.0E-5 
+    K3iso_1 = x0[0]
+    K3iso_2 = x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso1 = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)
+        QC_spectrum = QC3_bissection_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    chisquare = 0.0 
+    
+    '''
+    for i in range(E_size):
+        iterm = (np_Elatt_CM_selected[i] - np_E_QC_CM[i])
+        chisquare_val = iterm*iterm 
+        chisquare = chisquare + chisquare_val
+
+    '''
+    E_size = len(states_avg)
+    for i in range(0,E_size,1):
+        for j in range(0,E_size,1):
+            iterm = (states_avg[i] - np_QC_states[i])/states_err[i]
+            jterm = (states_avg[j] - np_QC_states[j])/states_err[j]
+            chisquare_val = iterm*covariance_matrix_inv[i][j]*jterm
+            chisquare = chisquare + chisquare_val  
+     
+
+    print("chisquare = ",chisquare)
+    print("--------------------------")
+    print("\n")
+    return chisquare 
+
+
 def test():
     nPx = 0
     nPy = 0
@@ -247,6 +344,37 @@ def test():
              1.00    0.85  
                      1.00
 '''
+
+
+#This one is with multiple P frames 
+def test1():
+    nPx = 0
+    nPy = 0
+    nPz = 0 
+    K3iso1 = 1000000.0
+    K3iso2 = 10000000.0 
+
+    x0 = [K3iso1, K3iso2]
+    nmax = 100
+    tol = 1E-10 
+    spline_size = 50 
+
+    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38)
+
+    print("we have started running")
+    np_cov_mat = np.array(covariance_mat)
+    cov_mat_inv = np.linalg.inv(np_cov_mat)
+    print("we inverted the corr mat")
+    print(np_cov_mat)
+    print("------------------------")
+    print(cov_mat_inv)
+    print("------------------------")
+
+
+    res = scipy.optimize.minimize(K3iso_fitting_function_all_moms,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
+    
+    print(res) 
+
 
 
 #This was done to test the spline based code
@@ -320,5 +448,6 @@ def spectrum_checker_for_QC():
         ax.axvline(x=Elatt_CM[i],color='darkorange')
     plt.show()
 
-test() 
+#test() 
+test1()
 #spectrum_checker_for_QC()
