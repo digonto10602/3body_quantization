@@ -98,7 +98,7 @@ void generate_spline_based_F3inv_L20(   int nPx,
     std::vector<double> selected_F3inv; 
     for(int i=0;i<f1_F3inv_vec.size();++i)
     {
-        if(f1_Ecm_vec[i]>energy_A_CM && f1_Ecm_vec[i]<energy_B_CM)
+        if(f1_Ecm_vec[i]>=energy_A_CM && f1_Ecm_vec[i]<=energy_B_CM)
         {
             selected_Ecm.push_back(f1_Ecm_vec[i]);
             selected_F3inv.push_back(f1_F3inv_vec[i]);
@@ -110,14 +110,178 @@ void generate_spline_based_F3inv_L20(   int nPx,
 
     int initial_point = 0;
     int final_point = F3inv_vec_size; 
-    int del_point = abs(final_point - initial_point)/spline_size; 
+    int del_point1 = abs(final_point - initial_point)/10;//spline_size; 
+
+    int point1 = initial_point + del_point1; 
+    int point2 = final_point - del_point1; 
 
     std::vector<int> index_vec; 
-    for(int i=0;i<spline_size; ++i)
-    {
-        int ind = initial_point + i*del_point; 
-        index_vec.push_back(ind); 
+
+    char debug = 'n';
+
+    int first_and_last_spline_size = 3*spline_size/10;
+    int middle_spline_size = 4*spline_size/10; 
+    int del_point2 = abs(initial_point - point1)/first_and_last_spline_size;
+    int del_point3 = abs(point1 - point2)/middle_spline_size; 
+    if(del_point2==0)
+    { 
+        for(int i=0;i<point1;++i)
+        {
+            int ind = i;
+            if(debug=='y')
+            {
+                std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+            }
+            index_vec.push_back(ind);
+        }
+
+        if(debug=='y')
+        {
+            std::cout<<"size change 1 = "<<index_vec.size()<<std::endl; 
+        }
+
+        for(int i=point2;i<final_point;++i)
+        {
+            int ind = i;
+            if(debug=='y')
+            {
+                std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+            }
+            index_vec.push_back(ind);
+        }
+
+        if(debug=='y')
+        {
+            std::cout<<"size change 2 = "<<index_vec.size()<<std::endl; 
+        }
+
+        int temp_spline_size = spline_size - index_vec.size(); 
+        if(temp_spline_size<middle_spline_size)
+        {
+            for(int i=point1;i<point2;++i)
+            {
+                int ind = i;
+                if(debug=='y')
+                {
+                    std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+                }
+                index_vec.push_back(ind);
+            }
+
+            if(debug=='y')
+            {
+                std::cout<<"size change 3 = "<<index_vec.size()<<std::endl; 
+            }
+        }
+        else 
+        {
+            int temp_delpoint = abs(point1 - point2)/temp_spline_size; 
+
+            for(int i=0;i<temp_spline_size;++i)
+            {
+                int ind = point1 + i*temp_delpoint;
+                if(debug=='y')
+                {
+                    std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+                }
+                index_vec.push_back(ind);
+            }
+            if(debug=='y')
+            {
+                std::cout<<"size change 3 = "<<index_vec.size()<<std::endl; 
+            }
+        }
     }
+    else 
+    {
+        for(int i=0;i<first_and_last_spline_size;++i)
+        {
+            int ind = initial_point + i*del_point2;
+            if(debug=='y')
+            {
+                std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+            }
+            index_vec.push_back(ind);
+        }
+        
+        if(debug=='y')
+        {
+            std::cout<<"size change 1 = "<<index_vec.size()<<std::endl; 
+        }
+
+        for(int i=0;i<first_and_last_spline_size;++i)
+        {
+            int ind = point2 + i*del_point2;
+            if(debug=='y')
+            {
+                std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+            }
+            index_vec.push_back(ind);
+        }
+
+        if(debug=='y')
+        {
+            std::cout<<"size change 2 = "<<index_vec.size()<<std::endl; 
+        }
+
+        int temp_spline_size = spline_size - index_vec.size(); 
+        if(temp_spline_size<middle_spline_size)
+        {
+            for(int i=point1;i<point2;++i)
+            {
+                int ind = i;
+                if(debug=='y')
+                {
+                    std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+                }
+                index_vec.push_back(ind);
+            }
+
+            if(debug=='y')
+            {
+                std::cout<<"size change 3 = "<<index_vec.size()<<std::endl; 
+            }
+        }
+        else 
+        {
+            for(int i=0;i<middle_spline_size;++i)
+            {
+                int ind = point1 + i*del_point3;
+                if(debug=='y')
+                {
+                    std::cout<<"ind = "<<ind<<'\t'<<"Ecm = "<<selected_Ecm[ind]<<'\t'<<"F3inv = "<<selected_F3inv[ind]<<std::endl; 
+                }
+                index_vec.push_back(ind);
+            }
+
+            if(debug=='y')
+            {
+                std::cout<<"size change 3 = "<<index_vec.size()<<std::endl; 
+            }
+        }
+    }
+
+
+    if(debug=='y')
+    {
+        std::cout<<std::setprecision(20); 
+        std::cout<<"final point = "<<final_point<<std::endl;
+        std::cout<<"point1 = "<<point1<<std::endl; 
+        std::cout<<"point2 = "<<point2<<std::endl;
+
+        std::cout<<"del_point1 = "<<del_point1<<std::endl;
+        std::cout<<"del_point2 = "<<del_point2<<std::endl;
+        std::cout<<"del_point3 = "<<del_point3<<std::endl;
+
+    }
+    
+
+    if(debug=='y')
+    {
+        std::cout<<"spline size = "<<spline_size<<std::endl; 
+    }
+
+    std::sort(index_vec.begin(),index_vec.end());
 
     //These two are selected for spline code 
     std::vector<double> xj_vec;

@@ -1312,13 +1312,113 @@ def pole_finding_by_reading_data_file_F3inv_all_boost():
         f.close() 
 
 
+#this reads the F3 data, creates F3inv, and separates the regions
+#that includes a pole inside that region 
+#the data file generated, each row will have two points between 
+#which there should a pole of F3 inside 
+def pole_region_finding_by_reading_data_file_F3inv_all_boost():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    Pmomlist = ['000','100','110','111','200']
+
+    for moms in Pmomlist:
+        statecounter=0
+
+        pole_vec = []
+
+        total_state = 3
+
+        drive = './test_files/F3_for_pole_KKpi_L20/'
+        filename1 = drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + moms + ".dat"
+
+        (En, EcmR, norm, ReF3sum, F2, G, K2inv, H) = np.genfromtxt(filename1, unpack=True)
+    
+
+        ReF3inv = np.zeros((len(ReF3sum)))
+        for i in range(len(ReF3sum)):
+            ReF3inv[i] = 1.0/ReF3sum[i]
+
+        pole_vec = []
+        gap_vec = []
+        F3inv_neg_Ecm = []
+        F3inv_pos_Ecm = []
+    
+        for i in range(len(EcmR)-1):
+            Ecm_val1 = EcmR[i]
+            E_val1 = En[i]
+            E_val2 = En[i+1]
+            Ecm_val2 = EcmR[i+1]
+            avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+            F3inv_val1 = ReF3inv[i]
+            F3inv_val2 = ReF3inv[i+1]
+
+            
+
+            #print(i,Ecm_val1,F3inv_val1)
+            if(F3inv_val1>0.0 and F3inv_val2<0.0):
+                print("initial pole found at = ",avg_Ecm," gap = ",abs(F3inv_val1 - F3inv_val2))
+                pole_vec.append(avg_Ecm)
+                gap_vec.append(abs(F3inv_val1 - F3inv_val2))
+                F3inv_pos_Ecm.append(Ecm_val1)
+                F3inv_neg_Ecm.append(Ecm_val2)
+    
+        #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+        #print(df)
+
+        #sorted_df = df.sort_values(1, ascending=False)
+
+        #f2 = sorted_df.reset_index(drop=True)
+        #print("sorted frame of poles")
+        #print(f2)
+        print("size of pos = ",len(F3inv_pos_Ecm))
+        print("size of neg = ",len(F3inv_neg_Ecm))
+        
+
+        outfile = "F3inv_poles_region_nP_" + moms + "_L20.dat"
+        f = open(outfile,'w')
+
+        #we are adding all the poles now
+        #we will correct the spectrum by looking
+        #at the F3iso data
+        for i in range(0,len(pole_vec)-1,1):
+            actual_pole = pole_vec[i]#f2[0][i]
+            region_start = F3inv_neg_Ecm[i]
+            region_end = F3inv_pos_Ecm[i+1]
+            print("poles = ",pole_vec[i]," regionA = ",region_start," region_B = ",region_end)#f2[0][i])
+            f.write("20" + '\t' + str(actual_pole) + '\t' + str(region_start) + '\t' + str(region_end) + '\n')
+    
+        f.close() 
+
+
 
 #pole_finding_by_reading_data_file_F3_P000()
 #pole_finding_by_reading_data_file_F3_P100()
 #pole_finding_by_reading_data_file_F3_P110()
 #pole_finding_by_reading_data_file_F3_P111()
 #pole_finding_by_reading_data_file_F3_P200()
-pole_finding_by_reading_data_file_F3inv_all_boost()
+#pole_finding_by_reading_data_file_F3inv_all_boost()
+pole_region_finding_by_reading_data_file_F3inv_all_boost()
 ############################### TEST ############################################
 
 #################################################################################

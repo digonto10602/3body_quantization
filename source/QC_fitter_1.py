@@ -12,6 +12,8 @@ import subprocess
 import math 
 import sys 
 
+from timeit import default_timer as timer
+
 threebody_path_ubuntu = '/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/'
 threebody_path_macos = '/Users/digonto/GitHub/3body_quantization/'
 macos_path2 = '/Users/digonto/GitHub/jackknife_codes/'
@@ -51,9 +53,9 @@ def sign_func(val):
     else:
         return -1.0; 
 
-def QC3_bissection_spline_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, tol, spline_size):
-    A = pointA 
-    B = pointB 
+def QC3_bissection_spline_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps):
+    A = pointA + energy_eps 
+    B = pointB - energy_eps 
     
     F3inv_A = subprocess.check_output(['./spline_F3inv',str(nPx),str(nPy),str(nPz),str(spline_size),str(pointA),str(pointB),str(A)],shell=False)
     F3inv_result_A = F3inv_A.decode('utf-8')
@@ -234,7 +236,7 @@ def K3iso_fitting_function(x0, nPx, nPy, nPz, nmax, tol, spline_size, corr_mat_i
 #with frame momenta P as [nPx, nPy, nPz], state number [0,1,2,0,1,..] along with their corresponding 
 #covariance matrices to perform the fitting, this is much more robust than 
 #the previous fitting function which was built for checking a single frame spectrum 
-def K3iso_fitting_function_all_moms(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
+def K3iso_fitting_function_all_moms_two_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
     energy_eps = 1.0E-5 
     K3iso_1 = x0[0]
     K3iso_2 = x0[1]
@@ -318,6 +320,92 @@ def K3iso_fitting_function_all_moms(x0, nmax, states_avg, states_err, nP_list, s
     return chisquare 
 
 
+#This is spline based 
+def K3iso_fitting_function_all_moms_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
+    energy_eps = 1.0E-3
+    K3iso_1 = x0[0]
+    K3iso_2 = 0.0 #x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_region_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles, F3inv_poles_region_start, F3inv_poles_region_end) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)             
+        QC_spectrum = QC3_bissection_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
+        #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    chisquare = 0.0 
+    
+    '''
+    for i in range(E_size):
+        iterm = (np_Elatt_CM_selected[i] - np_E_QC_CM[i])
+        chisquare_val = iterm*iterm 
+        chisquare = chisquare + chisquare_val
+
+    '''
+    E_size = len(states_avg)
+    for i in range(0,E_size,1):
+        for j in range(0,E_size,1):
+            iterm = (states_avg[i] - np_QC_states[i])/states_err[i]
+            jterm = (states_avg[j] - np_QC_states[j])/states_err[j]
+            chisquare_val = iterm*covariance_matrix_inv[i][j]*jterm
+            chisquare = chisquare + chisquare_val  
+     
+
+    print("chisquare = ",chisquare)
+    print("--------------------------")
+    print("\n")
+    return chisquare 
+
+
 def test():
     nPx = 0
     nPy = 0
@@ -366,16 +454,21 @@ def test1():
     nPx = 0
     nPy = 0
     nPz = 0 
-    K3iso1 = 1000000.0
-    K3iso2 = 10000000.0 
+    K3iso1 = 0.000127
+    K3iso2 = 0.0#10000000.0 
 
-    x0 = [K3iso1, K3iso2]
+    x0 = [K3iso1] #[K3iso1, K3iso2]
     nmax = 100
     tol = 1E-10 
-    spline_size = 50 
+    spline_size = 500 
 
-    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38)
+    #list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
+    list_of_mom = ['000_A1m', '100_A2']
+    
+    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38, list_of_mom)
 
+    for i in range(len(states_avg)):
+        print(states_avg[i],states_err[i],nP_list[i],state_no[i])
     print("we have started running")
     np_cov_mat = np.array(covariance_mat)
     cov_mat_inv = np.linalg.inv(np_cov_mat)
@@ -385,11 +478,12 @@ def test1():
     print(cov_mat_inv)
     print("------------------------")
 
+    start = timer()
+    res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
+    end = timer()
 
-    res = scipy.optimize.minimize(K3iso_fitting_function_all_moms,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
-    
     print(res) 
-
+    print("time = ",end - start)
 
 
 #This was done to test the spline based code
@@ -419,8 +513,8 @@ def spectrum_checker_for_QC():
     (L2, Elatt_CM, Elatt_CM_stat, Elatt_CM_sys) = np.genfromtxt(spectrum_filename, unpack=True)
 
 
-    K3iso1 =  -4.45893908e+07  #1336082.36755021
-    K3iso2 =  4.94547308e+08 #-10866109.92757
+    K3iso1 =  -189765.8705129288 #-4.45893908e+07  #1336082.36755021
+    K3iso2 =  0.0 #4.94547308e+08 #-10866109.92757
 
     QC_val = []
     for i in range(len(F3inv)):
@@ -465,6 +559,118 @@ def spectrum_checker_for_QC():
         ax.axvline(x=Elatt_CM[i],color='darkorange')
     plt.show()
 
+
+def spectrum_checker_for_splines():
+    nPx = 0
+    nPy = 0
+    nPz = 0 
+
+    F3_drive = threebody_path + "test_files/F3_for_pole_KKpi_L20/"
+    F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+    (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+    F3inv = np.zeros((len(F3)))
+    for i in range(len(F3)):
+        F3inv[i] = 1.0/F3[i]
+
+    F3inv_poles_drive = threebody_path + "test_files/F3inv_poles_L20/"    
+    F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+    (L1, F3inv_poles) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+    
+    spectrum_drive = threebody_path + "lattice_data/KKpi_interacting_spectrum/Three_body/L_20_only/"
+    spectrum_filename = spectrum_drive + "KKpi_spectrum.P_" + str(nPx) + str(nPy) + str(nPz) + "_usethisfile"
+
+    (L2, Elatt_CM, Elatt_CM_stat, Elatt_CM_sys) = np.genfromtxt(spectrum_filename, unpack=True)
+
+
+    K3iso1 =  1E-7#-4.45893908e+07  #1336082.36755021
+    K3iso2 =  0.0#4.94547308e+08 #-10866109.92757
+
+    QC_val = []
+    for i in range(len(F3inv)):
+        K3iso = K3iso1 + K3iso2*Ecm1[i]**2
+        QC_temp = QC3(K3iso,F3inv[i])
+        QC_val.append(QC_temp)
+    
+    np_y_val = np.zeros((len(F3inv_poles)))
+    
+    np_QC_val = np.array(QC_val)
+
+
+    spline_size = 500
+    
+    QC_val_spline = []
+
+    fig, ax = plt.subplots(figsize=(12,5))
+
+    ax.set_ylim(-1E8,1E8)
+    ax.set_xlim(0.26,0.37)
+
+    start = timer()
+
+    for i in range(0,len(F3inv_poles)-1,1):
+        pointA = F3inv_poles[i] #+ 1.0E-7
+        pointB = F3inv_poles[i+1] #- 1.0E-7
+        pointC = (pointA + pointB)/2.0 
+
+        Ecm_space1 = np.linspace(pointA, pointB, 100)
+        Ecm_space2 = np.linspace(pointC, pointB, 100)
+
+        Ecm_space = []
+        F3inv_spline = []
+        '''
+        for j in range(0,len(Ecm_space1)-1,1):
+            F3inv_C = subprocess.check_output(['./spline_F3inv',str(nPx),str(nPy),str(nPz),str(spline_size),str(pointA),str(pointB),str(Ecm_space1[j])],shell=False)
+            F3inv_result_C = F3inv_C.decode('utf-8')
+            F3inv_fin_result_C = float(F3inv_result_C)
+            print("pointA = ",pointA,"pointB = ", pointB, "Ecm = ",Ecm_space1[j],"F3inv = ",F3inv_fin_result_C)
+            #K3iso = K3iso1 + K3iso2*Ecm_space[i]**2
+            #QC_temp = QC3(K3iso,F3inv_fin_result_C)
+            #QC_val_spline.append(QC_temp)
+            F3inv_spline.append(F3inv_fin_result_C) 
+            Ecm_space.append(Ecm_space1[j])
+        '''
+        '''    
+        for j in range(0,len(Ecm_space2)-1,1):
+            F3inv_C = subprocess.check_output(['./spline_F3inv',str(nPx),str(nPy),str(nPz),str(spline_size),str(pointC),str(pointB),str(Ecm_space2[j])],shell=False)
+            F3inv_result_C = F3inv_C.decode('utf-8')
+            F3inv_fin_result_C = float(F3inv_result_C)
+            print("pointC = ",pointC,"pointB = ", pointB, "Ecm = ",Ecm_space2[j],"F3inv = ",F3inv_fin_result_C)
+            #K3iso = K3iso1 + K3iso2*Ecm_space[i]**2
+            #QC_temp = QC3(K3iso,F3inv_fin_result_C)
+            #QC_val_spline.append(QC_temp)
+            F3inv_spline.append(F3inv_fin_result_C)
+            Ecm_space.append(Ecm_space2[j])
+        '''
+
+        np_F3inv_spline = np.array(F3inv_spline)
+        np_Ecm_space = np.array(Ecm_space)
+
+        #ax.plot(np_Ecm_space, np_F3inv_spline, color='darkorange',zorder=3) 
+        #ax.scatter(np_Ecm_space, np_F3inv_spline, s=100, color='darkorange',zorder=3) 
+
+    np_QC_val_spline = np.array(QC_val_spline)            
+
+    end = timer() 
+    print("time = ",end - start)
+
+    #ax.plot(Ecm1,F3inv, color='blue', zorder=4)
+    ax.plot(Ecm1,np_QC_val, color='blue', zorder=4)
+    
+    #ax.plot(Ecm_space,np_QC_val_spline)
+    ax.axhline(y=0,color='black')
+    for i in range(0,len(F3inv_poles),1):
+        ax.axvline(x=F3inv_poles[i],color='darkorange',zorder=6)
+    #ax.scatter(F3inv_poles,np_y_val,s=100,facecolor='white',edgecolor='red')
+    #for i in range(len(Elatt_CM)):
+    #    ax.axvline(x=Elatt_CM[i],color='darkorange')
+    plt.show()
+
+
 #test() 
-#test1()
-spectrum_checker_for_QC()
+test1()
+#spectrum_checker_for_QC()
+
+#spectrum_checker_for_splines()
