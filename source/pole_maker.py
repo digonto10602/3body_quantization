@@ -1228,6 +1228,91 @@ def pole_finding_by_reading_data_file_F3_P200():
     
     f.close() 
 
+def pole_finding_by_reading_data_file_F3_all_boost():
+    atmpi = 0.06906
+    atmK = 0.09698
+
+    KKpi_threshold = atmK + atmK + atmpi 
+
+    KKKKbar_threshold = 4.0*atmK 
+
+    xi = 3.444
+    pi = np.arccos(-1.0)
+    L = 20
+    twopibyxiL = 2.0*pi/(xi*L)
+    nPx = 0
+    nPy = 0
+    nPz = 0
+
+    Px = nPx*twopibyxiL
+    Py = nPy*twopibyxiL
+    Pz = nPz*twopibyxiL
+
+    P = np.sqrt(Px*Px + Py*Py + Pz*Pz)
+
+    Pmomlist = ['000','100','110','111','200']
+
+    for moms in Pmomlist:
+        statecounter=0
+
+        pole_vec = []
+
+        total_state = 3
+
+        drive = './test_files/F3_for_pole_KKpi_L20/'
+        filename1 = drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + moms + ".dat"
+
+        (En, EcmR, norm, ReF3sum, F2, G, K2inv, H) = np.genfromtxt(filename1, unpack=True)
+    
+
+        ReF3inv = np.zeros((len(ReF3sum)))
+        for i in range(len(ReF3sum)):
+            ReF3inv[i] = 1.0/ReF3sum[i]
+
+        pole_vec = []
+        gap_vec = []
+    
+        for i in range(len(EcmR)-1):
+            Ecm_val1 = EcmR[i]
+            E_val1 = En[i]
+            E_val2 = En[i+1]
+            Ecm_val2 = EcmR[i+1]
+            avg_Ecm = (Ecm_val1 + Ecm_val2)/2.0
+
+            F3_val1 = ReF3sum[i]
+            F3_val2 = ReF3sum[i+1]
+
+            #print(i,Ecm_val1,F3inv_val1)
+            if(F3_val1<0.0 and F3_val2>0.0):
+                print("initial pole found at = ",avg_Ecm," gap = ",abs(F3_val1 - F3_val2))
+                pole_vec.append(avg_Ecm)
+                gap_vec.append(abs(F3_val1 - F3_val2))
+    
+        #df = pd.DataFrame(list(zip(pole_vec, gap_vec)))
+
+        #print(df)
+
+        #sorted_df = df.sort_values(1, ascending=False)
+
+        #f2 = sorted_df.reset_index(drop=True)
+        #print("sorted frame of poles")
+        #print(f2)
+
+        outfile = "F3_poles_nP_" + moms + "_L20.dat"
+        f = open(outfile,'w')
+
+        #we are adding all the poles now
+        #we will correct the spectrum by looking
+        #at the F3iso data
+        for i in range(len(pole_vec)):
+            actual_pole = pole_vec[i]#f2[0][i]
+            print("poles = ",pole_vec[i])#f2[0][i])
+            f.write("20" + '\t' + str(actual_pole) + '\n')
+    
+        f.close() 
+
+
+
 def pole_finding_by_reading_data_file_F3inv_all_boost():
     atmpi = 0.06906
     atmK = 0.09698
@@ -1411,14 +1496,22 @@ def pole_region_finding_by_reading_data_file_F3inv_all_boost():
         f.close() 
 
 
-
+# These are from old files 
+# We now use ultraHQ files made from OMP codes 
 #pole_finding_by_reading_data_file_F3_P000()
 #pole_finding_by_reading_data_file_F3_P100()
 #pole_finding_by_reading_data_file_F3_P110()
 #pole_finding_by_reading_data_file_F3_P111()
 #pole_finding_by_reading_data_file_F3_P200()
+#########################################################
+#These are the latest we are using 
+
+pole_finding_by_reading_data_file_F3_all_boost()
+
 #pole_finding_by_reading_data_file_F3inv_all_boost()
-pole_region_finding_by_reading_data_file_F3inv_all_boost()
+
+#pole_region_finding_by_reading_data_file_F3inv_all_boost()
+
 ############################### TEST ############################################
 
 #################################################################################

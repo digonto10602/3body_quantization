@@ -134,8 +134,9 @@ def QC3_bissection_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nm
             K3iso_C = K3iso1 + K3iso2*(C*C)
             QC_C = QC3(K3iso_C, F3inv_fin_result_C)
             print("QC_C = ",QC_C)
-            if(QC_C==0.0 or (B-A)/2.0 < tol):
+            if(QC_C==0.0 or abs(B-A)/2.0 < tol):
                 fin_result = C 
+                print("B-A/2 = ",abs(B-A)/2.0," tol = ", tol)
                 print("entered breaking condition for bissection with C = ",C)
                 break 
             
@@ -364,6 +365,18 @@ def K3iso_fitting_function_all_moms_one_parameter(x0, nmax, states_avg, states_e
         Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
         Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
 
+        print("Energy_A_Cm = ",Energy_A_CM)
+        print("Energy_B_CM = ",Energy_B_CM)
+        for i in range(0,len(Ecm1)-1,1):
+            if(Energy_A_CM>=Ecm1[i] and Energy_A_CM<=Ecm1[i+1]):
+                ind1 = i
+            if(Energy_B_CM>=Ecm1[i] and Energy_B_CM<=Ecm1[i+1]):
+                ind2 = i
+        print("ind1 = ",ind1)
+        print("ind2 = ",ind2)
+        Energy_A_CM = Ecm1[ind1 + 5]
+        Energy_B_CM = Ecm1[ind2 - 5]
+
         print("-----------------K3isoFit---------------------")
         print("P = ",nPx, nPy, nPz)
         print("state no = ",state_no[ind])
@@ -404,6 +417,90 @@ def K3iso_fitting_function_all_moms_one_parameter(x0, nmax, states_avg, states_e
     print("--------------------------")
     print("\n")
     return chisquare 
+
+def QC_spectrum_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, tol):
+    energy_eps = 1.0E-3
+    K3iso_1 = x0[0]
+    K3iso_2 = 0.0 #x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = "/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_region_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles, F3inv_poles_region_start, F3inv_poles_region_end) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("Energy_A_Cm = ",Energy_A_CM)
+        print("Energy_B_CM = ",Energy_B_CM)
+        for i in range(0,len(Ecm1)-1,1):
+            if(Energy_A_CM>=Ecm1[i] and Energy_A_CM<=Ecm1[i+1]):
+                ind1 = i
+            if(Energy_B_CM>=Ecm1[i] and Energy_B_CM<=Ecm1[i+1]):
+                ind2 = i
+        print("ind1 = ",ind1)
+        print("ind2 = ",ind2)
+        Energy_A_CM = Ecm1[ind1 + 5]
+        Energy_B_CM = Ecm1[ind2 - 5]
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)             
+        QC_spectrum = QC3_bissection_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
+        #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    state_counter = 0
+    filename = "QC_states_with_K3iso_" + str(K3iso_1) + "_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    f = open(filename,'w' )
+    for i in np_QC_states:
+        print("QC state ",state_counter," = ",i)
+        state_counter = state_counter + 1 
+        f.write("20" + '\t' + str(i) + '\n')
+
+    f.close()     
+ 
 
 
 def test():
@@ -454,16 +551,16 @@ def test1():
     nPx = 0
     nPy = 0
     nPz = 0 
-    K3iso1 = 0.000127
+    K3iso1 = 200000#0.000127
     K3iso2 = 0.0#10000000.0 
 
     x0 = [K3iso1] #[K3iso1, K3iso2]
-    nmax = 100
-    tol = 1E-10 
+    nmax = 500
+    tol = 1E-16 
     spline_size = 500 
 
     #list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
-    list_of_mom = ['000_A1m', '100_A2']
+    list_of_mom = ['000_A1m']
     
     states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38, list_of_mom)
 
@@ -486,9 +583,113 @@ def test1():
     print("time = ",end - start)
 
 
+#We plot the chisquare based on K3iso1 
+def test2():
+    nPx = 0
+    nPy = 0
+    nPz = 0 
+    #K3iso1 = 0.1#0.000127
+    K3iso2 = 0.0#10000000.0 
+
+    #x0 = [K3iso1] #[K3iso1, K3iso2]
+    nmax = 100
+    tol = 1E-10 
+    spline_size = 500 
+
+    #list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
+    list_of_mom = ['000_A1m']
+    
+    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38, list_of_mom)
+
+    for i in range(len(states_avg)):
+        print(states_avg[i],states_err[i],nP_list[i],state_no[i])
+    print("we have started running")
+    np_cov_mat = np.array(covariance_mat)
+    cov_mat_inv = np.linalg.inv(np_cov_mat)
+    print("we inverted the corr mat")
+    print(np_cov_mat)
+    print("------------------------")
+    print(cov_mat_inv)
+    print("------------------------")
+
+    start = timer()
+    #res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
+    
+    K3iso_space = np.linspace(2000,200000,5000)
+
+    f = open("chisquare_vs_K3iso1_nP_000_1.dat",'w')
+    for i in range(0,len(K3iso_space),1):
+        K3iso1 = K3iso_space[i]
+        x0 = [K3iso1]
+        chisquare = K3iso_fitting_function_all_moms_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size)
+        f.write(str(K3iso1) + '\t' + str(chisquare) + '\n')
+        print(K3iso1, chisquare)
+    end = timer()
+    f.close() 
+    #print(res) 
+    print("time = ",end - start)
+
+#QC_spectrum with one parameter K3iso1 = constant 
+def test3():
+    nPx = 0
+    nPy = 0
+    nPz = 0 
+    K3iso1 = -189765.8705129288#0.000127
+    K3iso2 = 0.0#10000000.0 
+
+    x0 = [K3iso1] #[K3iso1, K3iso2]
+    nmax = 500
+    tol = 1E-16 
+    spline_size = 500 
+
+    list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
+    #list_of_mom = ['200_A2']
+    #list_of_mom = ['000_A1m']
+    for irreps in list_of_mom:
+        newlist_val = [irreps]
+
+        states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.40, newlist_val)
+
+        print("irrep = ",irreps)
+        for i in range(len(states_avg)):
+            print(states_avg[i],states_err[i],nP_list[i],state_no[i])
+        print("we have started running")
+        np_cov_mat = np.array(covariance_mat)
+        cov_mat_inv = np.linalg.inv(np_cov_mat)
+        print("we inverted the corr mat")
+        print(np_cov_mat)
+        print("------------------------")
+        print(cov_mat_inv)
+        print("------------------------")
+
+        start = timer()
+        #res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
+        QC_spectrum_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, tol)
+    
+        end = timer() 
+        #print(res) 
+        print("time = ",end - start)
+
+def test5():
+    list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
+    #list_of_mom = ['200_A2']
+    #list_of_mom = ['000_A1m']
+    for irreps in list_of_mom:
+        newlist_val = [irreps]
+
+        states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.9, newlist_val)
+
+        print("irrep = ",irreps)
+        for i in range(len(states_avg)):
+            print(states_avg[i],states_err[i],nP_list[i],state_no[i])
+
 #This was done to test the spline based code
 #Check spectrum for given K3df values 
 def spectrum_checker_for_QC():
+    plt.rcParams.update({'font.size': 22})
+    plt.rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
+    plt.rc('text', usetex=True)
+    
     nPx = 0
     nPy = 0
     nPz = 0 
@@ -506,14 +707,22 @@ def spectrum_checker_for_QC():
     
     (L1, F3inv_poles) = np.genfromtxt(F3inv_poles_file, unpack=True)
 
+    F3_poles_drive = threebody_path + "test_files/F3_for_pole_KKpi_L20/"
+    F3_poles_file = F3_poles_drive + "F3_poles_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+    (LF3, F3poles) = np.genfromtxt(F3_poles_file, unpack=True)
     
     spectrum_drive = threebody_path + "lattice_data/KKpi_interacting_spectrum/Three_body/L_20_only/"
     spectrum_filename = spectrum_drive + "KKpi_spectrum.P_" + str(nPx) + str(nPy) + str(nPz) + "_usethisfile"
 
     (L2, Elatt_CM, Elatt_CM_stat, Elatt_CM_sys) = np.genfromtxt(spectrum_filename, unpack=True)
 
-
-    K3iso1 =  -189765.8705129288 #-4.45893908e+07  #1336082.36755021
+    KDFnonzero_spectrum_drive = threebody_path + "test_files/QC_states_L20/"
+    KDFnonzero_spectrum_file = KDFnonzero_spectrum_drive + "QC_states_with_K3iso_-189765.8705129288_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+    (Lkdf, Kdf_spec) = np.genfromtxt(KDFnonzero_spectrum_file, unpack=True) 
+    
+    K3iso1 = -189765.8705129288 #-4.45893908e+07  #1336082.36755021
     K3iso2 =  0.0 #4.94547308e+08 #-10866109.92757
 
     QC_val = []
@@ -549,18 +758,41 @@ def spectrum_checker_for_QC():
 
     fig, ax = plt.subplots(figsize=(12,5))
 
-    ax.set_ylim(-1E8,1E8)
+    #ax.set_title("K3iso = "+str(K3iso1))
+    ax.set_ylim(-5E6,5E6)
     ax.set_xlim(0.26,0.37)
-    ax.plot(Ecm1,np_QC_val)
+    ax.set_ylabel("$F_{3,iso}^{-1}$")
+    ax.set_xlabel("$E_{cm}$")
+    ax.plot(Ecm1,F3inv)
+    #ax.plot(Ecm1,np_QC_val)
+    ax.axhline(y=-K3iso1,color='red',label="$\\mathcal{K}_{3,iso} $= " + str(K3iso1))
+    #ax.plot(Ecm1,np_QC_val)
     #ax.plot(Ecm_space,np_QC_val_spline)
     ax.axhline(y=0,color='black')
-    ax.scatter(F3inv_poles,np_y_val,s=100,facecolor='white',edgecolor='red')
-    for i in range(len(Elatt_CM)):
+    #ax.scatter(F3inv_poles,np_y_val,s=100,facecolor='white',edgecolor='red')
+    for i in range(0,len(Elatt_CM),1):
         ax.axvline(x=Elatt_CM[i],color='darkorange')
+
+    for i in range(0, len(F3poles), 1):
+        ax.axvline(x=F3poles[i],color='black')
+
+    for i in range(0, len(Kdf_spec), 1):
+        ax.axvline(x=Kdf_spec[i],color='red')
+
+    ax.legend() 
+    fig.tight_layout() 
+    plt.draw() 
+    outfile = "temp.png"
+    plt.savefig(outfile)
     plt.show()
+    plt.close()
 
 
 def spectrum_checker_for_splines():
+    plt.rcParams.update({'font.size': 22})
+    plt.rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
+    plt.rc('text', usetex=True)
+    
     nPx = 0
     nPy = 0
     nPz = 0 
@@ -670,7 +902,13 @@ def spectrum_checker_for_splines():
 
 
 #test() 
-test1()
-#spectrum_checker_for_QC()
+#test1()
+spectrum_checker_for_QC()
+
+#test2()
+
+#test3()
+
+#test5()
 
 #spectrum_checker_for_splines()
