@@ -138,8 +138,9 @@ def QC3_bissection_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nm
             K3iso_C = K3iso1 + K3iso2*(C*C)
             QC_C = QC3(K3iso_C, F3inv_fin_result_C)
             print("QC_C = ",QC_C)
-            if(QC_C==0.0 or abs(B-A)/2.0 < tol):
+            if(abs(QC_C)<tol or abs(B-A)/2.0 < tol):
                 fin_result = C 
+                print("QC_C val = ",abs(QC_C), "tol = ",tol)
                 print("B-A/2 = ",abs(B-A)/2.0," tol = ", tol)
                 print("entered breaking condition for bissection with C = ",C)
                 break 
@@ -154,20 +155,101 @@ def QC3_bissection_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nm
             #fin_result = C  
         return fin_result 
 
+def QC3_bissection_interp1d_based(pointA_ind, pointB_ind, Ecm, F3inv, pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, tol):
+    
+    F3inv_for_interp = np.zeros((abs(pointA_ind - pointB_ind)))
+    Ecm_for_interp = np.zeros((abs(pointA_ind - pointB_ind)))
+    interp_counter = 0
+    for i in range(pointA_ind,pointB_ind,1):
+        Ecm_for_interp[interp_counter] = Ecm[i]
+        F3inv_for_interp[interp_counter] = F3inv[i]
+        interp_counter = interp_counter + 1 
+    
+    F3inv_interp = scipy.interpolate.interp1d(Ecm_for_interp,F3inv_for_interp, kind='linear')
+
+    A = pointA 
+    B = pointB 
+
+    #new_Ecm = np.linspace(A,B,1000)
+    #fig, ax = plt.subplots(figsize=(12,5))
+
+    #ax.set_ylim(-1E8,1E8)
+    #ax.set_xlim(0.26,0.37)
+
+    #ax.plot(Ecm,F3inv, color='blue', zorder=4)
+    #ax.plot(new_Ecm,F3inv_interp(new_Ecm), color='red', zorder=5)
+
+    #plt.show()
+    #exit()
+    
+    
+    #F3inv_A = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(A)],shell=False)
+    #F3inv_result_A = F3inv_A.decode('utf-8')
+    #F3inv_fin_result_A = float(F3inv_result_A)
+
+    F3inv_fin_result_A = F3inv_interp(A)
+    K3iso_A = K3iso1 + K3iso2*(A*A)
+    QC_A = QC3(K3iso_A, F3inv_fin_result_A)
+    
+    #F3inv_B = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(B)],shell=False)
+    #F3inv_result_B = F3inv_B.decode('utf-8')
+    #F3inv_fin_result_B = float(F3inv_result_B)
+
+    F3inv_fin_result_B = F3inv_interp(B)
+    K3iso_B = K3iso1 + K3iso2*(B*B)
+    QC_B = QC3(K3iso_B, F3inv_fin_result_B)
+
+    print("QC_A = ",QC_A)
+    print("QC_B = ",QC_B)
+    
+    if(QC_A==0.0):
+        return A 
+    elif(QC_B==0.0):
+        return B 
+    else:
+        fin_result = 0.0
+        for i in range(0,nmax,1):
+            C = (A + B)/2.0 
+            #F3inv_C = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(C)],shell=False)
+            #F3inv_result_C = F3inv_C.decode('utf-8')
+            #F3inv_fin_result_C = float(F3inv_result_C)
+
+            F3inv_fin_result_C = F3inv_interp(C)
+            K3iso_C = K3iso1 + K3iso2*(C*C)
+            QC_C = QC3(K3iso_C, F3inv_fin_result_C)
+            #print("QC_C = ",QC_C)
+            if( abs(QC_C) < tol or abs(B-A)/2.0 < tol/1000000 ):
+                fin_result = C 
+                print("QC val = ",abs(QC_C)," tol = ",tol)
+                print("B-A/2 = ",abs(B-A)/2.0," tol = ", tol/1000000)
+                print("entered breaking condition for bissection with C = ",C)
+                break 
+            
+            if(sign_func(QC_C)==sign_func(QC_A)):
+                A = C 
+                QC_A = QC_C 
+            elif(sign_func(QC_C)==sign_func(QC_B)):
+                B = C 
+                QC_B = QC_C
+
+            #fin_result = C  
+        return fin_result 
+
+
 def QC3_secant_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, tol):
     #A = pointA 
     #B = pointB 
     
     mid = (pointA+pointB)/2.0 
-    A = mid - tol 
-    B = mid + tol 
+    A = pointB - 2.0*tol 
+    B = pointB - tol 
 
     print("mid = ",mid)
     print("A = ",A)
     print("B = ",B)
 
     for i in range(0,nmax,1):
-        
+        itemp = i
         F3inv_A = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(A)],shell=False)
         F3inv_result_A = F3inv_A.decode('utf-8')
         F3inv_fin_result_A = float(F3inv_result_A)
@@ -190,9 +272,11 @@ def QC3_secant_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, 
             C = random.uniform(pointA,pointB)
             print("random C chosen = ",C)
             if(C>A):
+                i = itemp
                 B = C 
                 continue 
             elif(C<A):
+                i = itemp 
                 A = C 
                 continue 
 
@@ -215,6 +299,7 @@ def QC3_secant_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, 
 
         if(i==(nmax - 1)):
             print("Secant didn't converge, choose different guess, or no pole present!!")
+            pole = 0 
 
         B = A 
         A = C 
@@ -399,11 +484,114 @@ def K3iso_fitting_function_all_moms_two_parameter(x0, nmax, states_avg, states_e
             chisquare_val = iterm*covariance_matrix_inv[i][j]*jterm
             chisquare = chisquare + chisquare_val  
      
-
+    print("total number of states used = ",E_size)
     print("chisquare = ",chisquare)
     print("--------------------------")
     print("\n")
     return chisquare 
+
+
+#This one is based on the interpolator function 
+def K3iso_fitting_function_all_moms_two_parameter_interp1d_based(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
+    energy_eps = 1.0E-5
+    K3iso_1 = x0[0]
+    K3iso_2 = x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = threebody_path + "/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = threebody_path + "/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_region_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles, F3inv_poles_region_start, F3inv_poles_region_end) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("Energy_A_Cm = ",Energy_A_CM)
+        print("Energy_B_CM = ",Energy_B_CM)
+        for i in range(0,len(Ecm1)-1,1):
+            if(Energy_A_CM>=Ecm1[i] and Energy_A_CM<=Ecm1[i+1]):
+                ind1 = i
+            if(Energy_B_CM>=Ecm1[i] and Energy_B_CM<=Ecm1[i+1]):
+                ind2 = i
+        print("ind1 = ",ind1)
+        print("ind2 = ",ind2)
+        Energy_A_CM = Ecm1[ind1 + 5]
+        Energy_B_CM = Ecm1[ind2 - 5]
+
+        actual_ind1 = ind1 + 3
+        actual_ind2 = ind2 - 3 
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)             
+        QC_spectrum = QC3_bissection_interp1d_based(ind1, ind2, Ecm1, F3inv, Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
+        #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    chisquare = 0.0 
+    
+    '''
+    for i in range(E_size):
+        iterm = (np_Elatt_CM_selected[i] - np_E_QC_CM[i])
+        chisquare_val = iterm*iterm 
+        chisquare = chisquare + chisquare_val
+
+    '''
+    E_size = len(states_avg)
+    for i in range(0,E_size,1):
+        for j in range(0,E_size,1):
+            iterm = (states_avg[i] - np_QC_states[i])/states_err[i]
+            jterm = (states_avg[j] - np_QC_states[j])/states_err[j]
+            chisquare_val = iterm*covariance_matrix_inv[i][j]*jterm
+            chisquare = chisquare + chisquare_val  
+     
+    print("total number of states used = ",E_size)
+    print("chisquare = ",chisquare)
+    print("chisq per dof = ",chisquare/E_size)
+    print("--------------------------")
+    print("\n")
+    return chisquare 
+
 
 def K3iso_fitting_function_all_moms_two_parameter_secant(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
     energy_eps = 1.0E-5
@@ -682,6 +870,89 @@ def QC_spectrum_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_n
 
     f.close()     
  
+def QC_spectrum_two_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, tol):
+    energy_eps = 1.0E-3
+    K3iso_1 = x0[0]
+    K3iso_2 = x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = threebody_path + "/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = threebody_path + "/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_region_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles, F3inv_poles_region_start, F3inv_poles_region_end) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("Energy_A_Cm = ",Energy_A_CM)
+        print("Energy_B_CM = ",Energy_B_CM)
+        for i in range(0,len(Ecm1)-1,1):
+            if(Energy_A_CM>=Ecm1[i] and Energy_A_CM<=Ecm1[i+1]):
+                ind1 = i
+            if(Energy_B_CM>=Ecm1[i] and Energy_B_CM<=Ecm1[i+1]):
+                ind2 = i
+        print("ind1 = ",ind1)
+        print("ind2 = ",ind2)
+        Energy_A_CM = Ecm1[ind1 + 5]
+        Energy_B_CM = Ecm1[ind2 - 5]
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso1 = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)             
+        QC_spectrum = QC3_bissection_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
+        #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    state_counter = 0
+    filename = "QC_states_with_2params_K3iso_" + str(K3iso_1) + "_" + str(K3iso_2) + "_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    f = open(filename,'w' )
+    for i in np_QC_states:
+        print("QC state ",state_counter," = ",i)
+        state_counter = state_counter + 1 
+        f.write("20" + '\t' + str(i) + '\n')
+
+    f.close()     
+ 
 
 
 def test():
@@ -771,38 +1042,48 @@ def test1_two_params():
     nPx = 0
     nPy = 0
     nPz = 0 
-    K3iso1 = -10000#0.000127
-    K3iso2 = 100.0#10000000.0 
+    K3iso1 = -1141654.34618343#100000#0.000127
+    K3iso2 = 14543829.93897527#-1000.0#10000000.0 
+    initial_K3iso1 = K3iso1 
+    initial_K3iso2 = K3iso2 
 
     x0 = [K3iso1, K3iso2]
-    nmax = 500
-    tol = 1E-16 
+    nmax = 1500
+    tol = 1E-10 
     spline_size = 500 
 
     list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
-    #list_of_mom = ['000_A1m']
+    #list_of_mom = ['000_A1m','100_A2']
     
     states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.35, list_of_mom)
 
+    
     for i in range(len(states_avg)):
         print(states_avg[i],states_err[i],nP_list[i],state_no[i])
     print("we have started running")
     np_cov_mat = np.array(covariance_mat)
-    cov_mat_inv = np.linalg.inv(np_cov_mat)
-    print("we inverted the corr mat")
+    print("correlation matrix:")
     print(np_cov_mat)
     print("------------------------")
+    
+    
+    cov_mat_inv = np.linalg.inv(np_cov_mat)
+    
+    
+    print("we inverted the corr mat")
     print(cov_mat_inv)
     print("------------------------")
-
+    #exit() 
     start = timer()
     #res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
     
     #This is done using iminuit
-    res = minimize(K3iso_fitting_function_all_moms_two_parameter_secant,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size))
+    res = minimize(K3iso_fitting_function_all_moms_two_parameter_interp1d_based,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size))
     
     end = timer()
 
+    print("GUESS K3iso1 = ",initial_K3iso1)
+    print("GUESS K3iso2 = ",initial_K3iso2)
     print(res) 
     print("time = ",end - start)
 
@@ -858,10 +1139,10 @@ def test3():
     nPx = 0
     nPy = 0
     nPz = 0 
-    K3iso1 = -189765.8705129288#0.000127
-    K3iso2 = 0.0#10000000.0 
+    K3iso1 = 299670.6383505#1359193.91087736#-189765.8705129288#0.000127
+    K3iso2 = -4146398.0878418#-11037973.63450998#0.0#10000000.0 
 
-    x0 = [K3iso1] #[K3iso1, K3iso2]
+    x0 = [K3iso1, K3iso2]
     nmax = 500
     tol = 1E-16 
     spline_size = 500 
@@ -888,7 +1169,7 @@ def test3():
 
         start = timer()
         #res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
-        QC_spectrum_one_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, tol)
+        QC_spectrum_two_parameter(x0, nmax, states_avg, states_err, nP_list, state_no, tol)
     
         end = timer() 
         #print(res) 
@@ -1127,12 +1408,12 @@ def spectrum_checker_for_splines():
 
 #test() 
 #test1()
-test1_two_params()
+#test1_two_params()
 #spectrum_checker_for_QC()
 
 #test2()
 
-#test3()
+test3()
 
 #test5()
 
