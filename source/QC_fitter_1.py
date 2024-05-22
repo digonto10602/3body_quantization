@@ -16,6 +16,8 @@ from timeit import default_timer as timer
 
 from iminuit import minimize 
 
+import random 
+
 threebody_path_ubuntu = '/home/digonto/Codes/Practical_Lattice_v2/3body_quantization/'
 threebody_path_macos = '/Users/digonto/GitHub/3body_quantization/'
 macos_path2 = '/Users/digonto/GitHub/jackknife_codes/'
@@ -151,6 +153,74 @@ def QC3_bissection_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nm
 
             #fin_result = C  
         return fin_result 
+
+def QC3_secant_eigen_based(pointA, pointB, K3iso1, K3iso2, nPx, nPy, nPz, nmax, tol):
+    #A = pointA 
+    #B = pointB 
+    
+    mid = (pointA+pointB)/2.0 
+    A = mid - tol 
+    B = mid + tol 
+
+    print("mid = ",mid)
+    print("A = ",A)
+    print("B = ",B)
+
+    for i in range(0,nmax,1):
+        
+        F3inv_A = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(A)],shell=False)
+        F3inv_result_A = F3inv_A.decode('utf-8')
+        F3inv_fin_result_A = float(F3inv_result_A)
+        K3iso_A = K3iso1 + K3iso2*(A*A)
+        QC_A = QC3(K3iso_A, F3inv_fin_result_A)
+        print("QC_A = ",QC_A)
+    
+        F3inv_B = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(B)],shell=False)
+        F3inv_result_B = F3inv_B.decode('utf-8')
+        F3inv_fin_result_B = float(F3inv_result_B)
+        K3iso_B = K3iso1 + K3iso2*(B*B)
+        QC_B = QC3(K3iso_B, F3inv_fin_result_B)
+        print("QC_B = ",QC_B)
+
+        C = A - QC_A*(A - B)/(QC_A - QC_B)
+
+        print("C = ",C)
+
+        if(C<=pointA or C>=pointB):
+            C = random.uniform(pointA,pointB)
+            print("random C chosen = ",C)
+            if(C>A):
+                B = C 
+                continue 
+            elif(C<A):
+                A = C 
+                continue 
+
+        F3inv_C = subprocess.check_output(['./eigen_F3inv',str(nPx),str(nPy),str(nPz),str(C)],shell=False)
+        F3inv_result_C = F3inv_C.decode('utf-8')
+        F3inv_fin_result_C = float(F3inv_result_C)
+        K3iso_C = K3iso1 + K3iso2*(C*C)
+        QC_C = QC3(K3iso_C, F3inv_fin_result_C)
+
+        print("QC_C = ",QC_C)
+
+        
+        if(abs(QC_C)<=tol):
+             pole = C 
+             break 
+        elif(abs(C - A)<=tol):
+            pole = C 
+            break 
+        #point0 = point1 - f1*(point1 - point2)/(f1 - f2);
+
+        if(i==(nmax - 1)):
+            print("Secant didn't converge, choose different guess, or no pole present!!")
+
+        B = A 
+        A = C 
+    
+    print("pole found = ",pole)
+    return pole 
 
 
 #nmax is the max iteration number 
@@ -302,6 +372,102 @@ def K3iso_fitting_function_all_moms_two_parameter(x0, nmax, states_avg, states_e
         print("K3iso = ",K3iso_1)
         print("K3iso2 = ",K3iso_2)             
         QC_spectrum = QC3_bissection_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
+        #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
+        print("bissection result = ",QC_spectrum)
+        Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
+        print("Ecm_latt = ",states_avg[ind]," Ecm_QC = ",QC_spectrum, " Diff = ",Diff,"%")
+        QC_states.append(QC_spectrum)
+        print("---------------------------------------------")
+
+    #energy_cutoff = 0.37
+    np_QC_states = np.array(QC_states)
+
+    chisquare = 0.0 
+    
+    '''
+    for i in range(E_size):
+        iterm = (np_Elatt_CM_selected[i] - np_E_QC_CM[i])
+        chisquare_val = iterm*iterm 
+        chisquare = chisquare + chisquare_val
+
+    '''
+    E_size = len(states_avg)
+    for i in range(0,E_size,1):
+        for j in range(0,E_size,1):
+            iterm = (states_avg[i] - np_QC_states[i])/states_err[i]
+            jterm = (states_avg[j] - np_QC_states[j])/states_err[j]
+            chisquare_val = iterm*covariance_matrix_inv[i][j]*jterm
+            chisquare = chisquare + chisquare_val  
+     
+
+    print("chisquare = ",chisquare)
+    print("--------------------------")
+    print("\n")
+    return chisquare 
+
+def K3iso_fitting_function_all_moms_two_parameter_secant(x0, nmax, states_avg, states_err, nP_list, state_no, covariance_matrix_inv, tol, spline_size):
+    energy_eps = 1.0E-5
+    K3iso_1 = x0[0]
+    K3iso_2 = x0[1]
+
+    QC_states = []
+
+    #for i in range(len(state_no)):
+    #    print("state nums = ",i,state_no[i])
+    
+    for ind in range(0,len(states_avg),1):
+        state_ecm = states_avg[ind]
+        nPx = nP_list[ind][0]
+        nPy = nP_list[ind][1]
+        nPz = nP_list[ind][2]
+
+        #print(state_no)
+        #print("state num size = ",len(state_no))
+        #print("i = ",ind)
+        #print(state_no[ind+1])
+        
+        state_num_val = state_no[ind]
+
+        
+
+        if(state_num_val==0):    
+            F3_drive = threebody_path + "/test_files/F3_for_pole_KKpi_L20/"
+            F3_file = F3_drive + "ultraHQ_F3_for_pole_KKpi_L20_nP_" + str(nPx) + str(nPy) + str(nPz) + ".dat"
+    
+            (En1, Ecm1, norm1, F3, F2, G, K2inv, Hinv) = np.genfromtxt(F3_file,unpack=True)
+            F3inv = np.zeros((len(F3)))
+            for i in range(0,len(F3),1):
+                F3inv[i] = 1.0/F3[i]
+
+            F3inv_poles_drive = threebody_path + "/test_files/F3inv_poles_L20/"    
+            F3inv_poles_file = F3inv_poles_drive + "F3inv_poles_region_nP_" + str(nPx) + str(nPy) + str(nPz) + "_L20.dat"
+    
+            (L1, F3inv_poles, F3inv_poles_region_start, F3inv_poles_region_end) = np.genfromtxt(F3inv_poles_file, unpack=True)
+
+
+        Energy_A_CM = F3inv_poles_region_start[state_num_val] #+ energy_eps #F3inv_poles[state_num_val] + energy_eps
+        Energy_B_CM = F3inv_poles_region_end[state_num_val] #- energy_eps #F3inv_poles[state_num_val + 1] - energy_eps
+
+        print("Energy_A_Cm = ",Energy_A_CM)
+        print("Energy_B_CM = ",Energy_B_CM)
+        for i in range(0,len(Ecm1)-1,1):
+            if(Energy_A_CM>=Ecm1[i] and Energy_A_CM<=Ecm1[i+1]):
+                ind1 = i
+            if(Energy_B_CM>=Ecm1[i] and Energy_B_CM<=Ecm1[i+1]):
+                ind2 = i
+        print("ind1 = ",ind1)
+        print("ind2 = ",ind2)
+        Energy_A_CM = Ecm1[ind1 + 5]
+        Energy_B_CM = Ecm1[ind2 - 5]
+
+        print("-----------------K3isoFit---------------------")
+        print("P = ",nPx, nPy, nPz)
+        print("state no = ",state_no[ind])
+        print("ECM A = ",Energy_A_CM)
+        print("ECM B = ",Energy_B_CM)
+        print("K3iso = ",K3iso_1)
+        print("K3iso2 = ",K3iso_2)             
+        QC_spectrum = QC3_secant_eigen_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol)#QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size)
         #QC_spectrum = QC3_bissection_spline_based(Energy_A_CM, Energy_B_CM, K3iso_1, K3iso_2, nPx, nPy, nPz, nmax, tol, spline_size, energy_eps)
         print("bissection result = ",QC_spectrum)
         Diff = abs((states_avg[ind] - QC_spectrum)/states_avg[ind])*100.0
@@ -613,10 +779,10 @@ def test1_two_params():
     tol = 1E-16 
     spline_size = 500 
 
-    #list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
-    list_of_mom = ['000_A1m']
+    list_of_mom = ['000_A1m','100_A2','110_A2','111_A2','200_A2']
+    #list_of_mom = ['000_A1m']
     
-    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.38, list_of_mom)
+    states_avg, states_err, nP_list, state_no, covariance_mat = covariance_between_states_L20(0.35, list_of_mom)
 
     for i in range(len(states_avg)):
         print(states_avg[i],states_err[i],nP_list[i],state_no[i])
@@ -633,7 +799,7 @@ def test1_two_params():
     #res = scipy.optimize.minimize(K3iso_fitting_function_all_moms_one_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size),method='Nelder-Mead')
     
     #This is done using iminuit
-    res = minimize(K3iso_fitting_function_all_moms_two_parameter,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size))
+    res = minimize(K3iso_fitting_function_all_moms_two_parameter_secant,x0=x0,args=(nmax, states_avg, states_err, nP_list, state_no, cov_mat_inv, tol, spline_size))
     
     end = timer()
 
